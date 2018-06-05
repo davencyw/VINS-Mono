@@ -50,6 +50,7 @@ public:
   void slideWindowNew();
   void slideWindowOld();
   void optimization();
+  void updateWeights();
   void vector2double();
   void double2vector();
   bool failureDetection();

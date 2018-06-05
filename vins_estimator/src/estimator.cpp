@@ -430,6 +430,7 @@ void Estimator::solveOdometry() {
     TicToc t_tri;
     f_manager.triangulate(Ps, tic, ric);
     ROS_DEBUG("triangulation costs %f", t_tri.toc());
+    updateWeights();
     optimization();
   }
 }
@@ -610,6 +611,37 @@ bool Estimator::failureDetection() {
   return false;
 }
 
+void Estimator::updateWeights() {
+  // TODO(davencyw): change size of weights and indexing of weights
+  residuals.resize(f_manager.feature.size());
+  std::fill(residuals.begin(), residuals.end(), 1.0);
+  weights.resize(f_manager.feature.size());
+  std::fill(weights.begin(), weights.end(), 1.0);
+
+  int feature_counter(0);
+  int feature_index = -1;
+  for (auto &it_per_id : f_manager.feature) {
+    ++feature_index;
+    int frame_id(it_per_id.start_frame); // same as imu_i usually?
+    int numframes(0);
+    for (auto &it_per_frame : it_per_id.feature_per_frame) {
+      // update residuals for each frame and sum up
+      residuals[feature_index] += ReprojectionError(
+          it_per_frame.uv.x(), it_per_frame.uv.y(), &(para_Pose[frame_id][0]),
+          &(para_Pose[frame_id][3]), it_per_frame.point.data());
+      ++frame_id;
+      ++numframes;
+    }
+    residuals[feature_index] /= static_cast<double>(numframes);
+  }
+  // TODO(davencyw): update weights with class to be able to change the method
+  // classifyPointsNoDep(residuals, weights);
+  std::cout << "\n\n\n Residuals\n";
+  for (auto &wi : residuals)
+    std::cout << wi << "\t";
+  std::cout << std::endl;
+}
+
 void Estimator::optimization() {
   ceres::Problem problem;
   ceres::LossFunction *loss_function;
@@ -657,34 +689,8 @@ void Estimator::optimization() {
                              para_Pose[j], para_SpeedBias[j]);
   }
 
-  // start davencyw: update weights
-  // TODO(davencyw): change size of weights and indexing of weights
-  residuals.resize(f_manager.feature.size());
-  std::fill(residuals.begin(), residuals.end(), 1.0);
-  weights.resize(f_manager.feature.size());
-  std::fill(weights.begin(), weights.end(), 1.0);
-
-  int feature_counter(0);
-  int feature_index = -1;
-  for (auto &it_per_id : f_manager.feature) {
-    ++feature_index;
-    int frame_id(it_per_id.start_frame); // same as imu_i usually?
-    int numframes(0);
-    for (auto &it_per_frame : it_per_id.feature_per_frame) {
-      // update residuals for each frame and sum up
-      residuals[feature_index] += ReprojectionError(
-          it_per_frame.uv.x(), it_per_frame.uv.y(), &(para_Pose[frame_id][3]),
-          &(para_Pose[frame_id][0]), it_per_frame.point.data());
-      ++numframes;
-    }
-    residuals[feature_index] /= static_cast<double>(numframes);
-  }
-  // TODO(davencyw): update weights with class to be able to change the method
-  // classifyPointsNoDep(residuals, weights);
-  // end davencyw: update weights
-
   int f_m_cnt = 0;
-  feature_index = -1;
+  int feature_index = -1;
   for (auto &it_per_id : f_manager.feature) {
     it_per_id.used_num = it_per_id.feature_per_frame.size();
     if (!(it_per_id.used_num >= 2 && it_per_id.start_frame < WINDOW_SIZE - 2))
