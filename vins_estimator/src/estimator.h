@@ -22,6 +22,8 @@
 #include <queue>
 #include <unordered_map>
 
+#include "pointclassifier/pointclassifier.h"
+
 class Estimator {
 public:
   Estimator();
