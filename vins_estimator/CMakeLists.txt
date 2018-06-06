@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 2.8.3)
 project(vins_estimator)
 
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS "-std=c++17")
 #-DEIGEN_USE_MKL_ALL")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wno-ignored-attributes -g -std=c++17")
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
@@ -48,9 +48,8 @@ add_executable(vins_estimator
     src/initial/initial_aligment.cpp
     src/initial/initial_sfm.cpp
     src/initial/initial_ex_rotation.cpp
+    src/dynenv/weightsIO.cc
     )
 
 
-target_link_libraries(vins_estimator ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES}) 
-
-
+target_link_libraries(vins_estimator ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
