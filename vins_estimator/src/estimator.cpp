@@ -430,8 +430,8 @@ void Estimator::solveOdometry() {
     TicToc t_tri;
     f_manager.triangulate(Ps, tic, ric);
     ROS_DEBUG("triangulation costs %f", t_tri.toc());
-    updateWeights();
     optimization();
+    updateWeights();
   }
 }
 
@@ -623,12 +623,14 @@ void Estimator::updateWeights() {
     }
     it_per_id.residual /= static_cast<double>(numframes);
   }
-  // TODO(davencyw): update weights with class to be able to change the method
-  // classifyPointsNoDep(residuals, weights);
-  // std::cout << "\n\n\n Residuals\n";
-  // for (auto &wi : residuals)
-  //   std::cout << wi << "\t";
-  // std::cout << std::endl;
+  classifyPointsNoDep classifier;
+  classifier.classify(f_manager);
+
+  // std::cout << "\n\n";
+  // for (auto &it_per_id : f_manager.feature) {
+  //   std::cout << it_per_id.residual << " : " << it_per_id.weight << "\t";
+  // }
+  // std::cout << "\n\n";
 }
 
 void Estimator::optimization() {
