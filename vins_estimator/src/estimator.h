@@ -30,7 +30,7 @@ public:
   Estimator();
 
   void setParameter();
-  void setIO(IO *io) { io = io; }
+  void setIO(IO *io_) { io = io_; }
 
   // interface
   void processIMU(double t, const Vector3d &linear_acceleration,

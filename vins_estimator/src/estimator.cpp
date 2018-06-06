@@ -432,7 +432,9 @@ void Estimator::solveOdometry() {
     ROS_DEBUG("triangulation costs %f", t_tri.toc());
     optimization();
     updateWeights();
-    io->weights2File(f_manager);
+    if (!(io == nullptr)) {
+      io->averageWeights2File(f_manager);
+    }
   }
 }
 
