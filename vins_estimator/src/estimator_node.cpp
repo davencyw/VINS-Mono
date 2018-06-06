@@ -336,15 +336,11 @@ int main(int argc, char **argv) {
                                  ros::console::levels::Info);
   readParameters(n);
   estimator.setParameter();
-  std::string weights_filepath("~");
+  std::string weights_filepath("~/weights.csv");
   n.getParam("weights_filepath", weights_filepath);
+  std::cout << "weights filepath: " << weights_filepath << "\n";
   IO io(weights_filepath);
   estimator.setIO(&io);
-  if (estimator.io == nullptr) {
-    std::cout << "FAILED\n";
-  } else {
-    std::cout << "NOTFAILED\n";
-  }
 
 #ifdef EIGEN_DONT_PARALLELIZE
   ROS_DEBUG("EIGEN_DONT_PARALLELIZE");
@@ -364,5 +360,7 @@ int main(int argc, char **argv) {
 
   std::thread measurement_process{process};
   ros::spin();
+
+  io.write();
   return 0;
 }

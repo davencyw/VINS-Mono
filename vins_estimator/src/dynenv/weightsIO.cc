@@ -7,12 +7,17 @@ IO::IO(std::string weights_filepath) {
 
 IO::~IO() {
 
+  _fstream_output_weights->close();
+  delete _fstream_output_weights;
+}
+
+void IO::write() {
+
   for (auto &average_weight_i : _average_weights) {
     *_fstream_output_weights << average_weight_i << ";";
   }
 
-  _fstream_output_weights->close();
-  delete _fstream_output_weights;
+  std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
   std::cout << "WROTE WEIGHTS!" << std::endl;
 }
 
