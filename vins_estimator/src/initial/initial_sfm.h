@@ -19,25 +19,6 @@ struct SFMFeature {
   double depth;
 };
 
-inline double ReprojectionError(const double observed_u,
-                                const double observed_v,
-                                const double *const camera_T,
-                                const double *const camera_R,
-                                const double *point) {
-
-  double p[3];
-  ceres::QuaternionRotatePoint(camera_R, point, p);
-  p[0] += camera_T[0];
-  p[1] += camera_T[1];
-  p[2] += camera_T[2];
-  const double xp = p[0] / p[2];
-  const double yp = p[1] / p[2];
-  const double residuals_x = xp - (observed_u);
-  const double residuals_y = yp - (observed_v);
-
-  return residuals_x * residuals_x + residuals_y * residuals_y;
-}
-
 struct ReprojectionError3D {
   ReprojectionError3D(double observed_u, double observed_v)
       : observed_u(observed_u), observed_v(observed_v) {}

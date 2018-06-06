@@ -5,8 +5,9 @@ double ProjectionFactor::sum_t;
 
 ProjectionFactor::ProjectionFactor(const Eigen::Vector3d &_pts_i,
                                    const Eigen::Vector3d &_pts_j,
-                                   const double weight)
-    : pts_i(_pts_i), pts_j(_pts_j), weight(weight) {
+                                   const double weight, double *comp_residual)
+    : pts_i(_pts_i), pts_j(_pts_j), weight(weight),
+      comp_residual(comp_residual) {
 #ifdef UNIT_SPHERE_ERROR
   Eigen::Vector3d b1, b2;
   Eigen::Vector3d a = pts_j.normalized();
@@ -54,6 +55,8 @@ bool ProjectionFactor::Evaluate(double const *const *parameters,
   residual = sqrt_info * residual;
 
   // davencyw classification weights
+  *comp_residual = residual.squaredNorm();
+  // = residual(0) * residual(0) + residual(1) * residual(1);
   residual *= weight;
 
   if (jacobians) {

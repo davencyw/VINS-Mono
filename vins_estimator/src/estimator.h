@@ -132,8 +132,4 @@ public:
   Vector3d relo_relative_t;
   Quaterniond relo_relative_q;
   double relo_relative_yaw;
-
-  // davencyw classification data
-  std::vector<double> weights;
-  std::vector<double> residuals;
 };

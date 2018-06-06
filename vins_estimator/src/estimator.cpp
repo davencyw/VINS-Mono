@@ -612,34 +612,23 @@ bool Estimator::failureDetection() {
 }
 
 void Estimator::updateWeights() {
-  // TODO(davencyw): change size of weights and indexing of weights
-  residuals.resize(f_manager.feature.size());
-  std::fill(residuals.begin(), residuals.end(), 1.0);
-  weights.resize(f_manager.feature.size());
-  std::fill(weights.begin(), weights.end(), 1.0);
 
-  int feature_counter(0);
-  int feature_index = -1;
   for (auto &it_per_id : f_manager.feature) {
-    ++feature_index;
-    int frame_id(it_per_id.start_frame); // same as imu_i usually?
     int numframes(0);
+    it_per_id.residual = 0;
     for (auto &it_per_frame : it_per_id.feature_per_frame) {
       // update residuals for each frame and sum up
-      residuals[feature_index] += ReprojectionError(
-          it_per_frame.uv.x(), it_per_frame.uv.y(), &(para_Pose[frame_id][0]),
-          &(para_Pose[frame_id][3]), it_per_frame.point.data());
-      ++frame_id;
+      it_per_id.residual += it_per_frame.residual;
       ++numframes;
     }
-    residuals[feature_index] /= static_cast<double>(numframes);
+    it_per_id.residual /= static_cast<double>(numframes);
   }
   // TODO(davencyw): update weights with class to be able to change the method
   // classifyPointsNoDep(residuals, weights);
-  std::cout << "\n\n\n Residuals\n";
-  for (auto &wi : residuals)
-    std::cout << wi << "\t";
-  std::cout << std::endl;
+  // std::cout << "\n\n\n Residuals\n";
+  // for (auto &wi : residuals)
+  //   std::cout << wi << "\t";
+  // std::cout << std::endl;
 }
 
 void Estimator::optimization() {
@@ -727,8 +716,8 @@ void Estimator::optimization() {
         f_td->check(para);
         */
       } else {
-        ProjectionFactor *f =
-            new ProjectionFactor(pts_i, pts_j, weights[feature_index]);
+        ProjectionFactor *f = new ProjectionFactor(
+            pts_i, pts_j, it_per_id.weight, &(it_per_frame.residual));
         problem.AddResidualBlock(f, loss_function, para_Pose[imu_i],
                                  para_Pose[imu_j], para_Ex_Pose[0],
                                  para_Feature[feature_index]);
@@ -765,8 +754,11 @@ void Estimator::optimization() {
                        match_points[retrive_feature_index].y(), 1.0);
           Vector3d pts_i = it_per_id.feature_per_frame[0].point;
 
-          ProjectionFactor *f =
-              new ProjectionFactor(pts_i, pts_j, weights[feature_index]);
+          // TODO(davencyw): check if this relocalization also gives residuals
+          // which need to be incorporated
+          double null_residual;
+          ProjectionFactor *f = new ProjectionFactor(
+              pts_i, pts_j, it_per_id.weight, &(null_residual));
           problem.AddResidualBlock(f, loss_function, para_Pose[start],
                                    relo_Pose, para_Ex_Pose[0],
                                    para_Feature[feature_index]);
@@ -870,8 +862,8 @@ void Estimator::optimization() {
                 vector<int>{0, 3});
             marginalization_info->addResidualBlockInfo(residual_block_info);
           } else {
-            ProjectionFactor *f =
-                new ProjectionFactor(pts_i, pts_j, weights[feature_index]);
+            ProjectionFactor *f = new ProjectionFactor(
+                pts_i, pts_j, it_per_id.weight, &(it_per_frame.residual));
             ResidualBlockInfo *residual_block_info = new ResidualBlockInfo(
                 f, loss_function,
                 vector<double *>{para_Pose[imu_i], para_Pose[imu_j],
