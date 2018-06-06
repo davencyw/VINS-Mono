@@ -11,12 +11,12 @@
 class IO {
 public:
   IO(std::string weights_filepath);
-  ~IO();
   void averageWeights2File(const FeatureManager &f_manager);
   void write();
 
 private:
-  std::ofstream *_fstream_output_weights;
+  std::string _weights_filepath;
+  std::ofstream _weights_file;
   std::vector<double> _average_weights;
 };
 

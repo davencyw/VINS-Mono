@@ -56,7 +56,6 @@ bool ProjectionFactor::Evaluate(double const *const *parameters,
 
   // davencyw classification weights
   *comp_residual = residual.squaredNorm();
-  // = residual(0) * residual(0) + residual(1) * residual(1);
   residual *= weight;
 
   if (jacobians) {

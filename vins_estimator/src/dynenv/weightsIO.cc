@@ -1,24 +1,16 @@
 #include "weightsIO.h"
 
-IO::IO(std::string weights_filepath) {
-  _fstream_output_weights = new std::ofstream();
-  _fstream_output_weights->open(weights_filepath);
-}
-
-IO::~IO() {
-
-  _fstream_output_weights->close();
-  delete _fstream_output_weights;
-}
+IO::IO(std::string weights_filepath) : _weights_filepath(weights_filepath) {}
 
 void IO::write() {
+  _weights_file.open(_weights_filepath, ios::out);
 
   for (auto &average_weight_i : _average_weights) {
-    *_fstream_output_weights << average_weight_i << ";";
+    _weights_file << average_weight_i << ";";
   }
-
-  std::cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
-  std::cout << "WROTE WEIGHTS!" << std::endl;
+  _weights_file.close();
+  std::cout << "\nWROTE " << _average_weights.size() << " WEIGHTS!"
+            << std::endl;
 }
 
 void IO::averageWeights2File(const FeatureManager &f_manager) {
@@ -29,6 +21,5 @@ void IO::averageWeights2File(const FeatureManager &f_manager) {
   }
 
   average_weight /= static_cast<double>(f_manager.feature.size());
-  std::cout << average_weight;
   _average_weights.push_back(average_weight);
 }
