@@ -432,6 +432,7 @@ void Estimator::solveOdometry() {
     ROS_DEBUG("triangulation costs %f", t_tri.toc());
     optimization();
     updateWeights();
+    io->weights2File(f_manager);
   }
 }
 
@@ -625,12 +626,6 @@ void Estimator::updateWeights() {
   }
   classifyPointsNoDep classifier;
   classifier.classify(f_manager);
-
-  // std::cout << "\n\n";
-  // for (auto &it_per_id : f_manager.feature) {
-  //   std::cout << it_per_id.residual << " : " << it_per_id.weight << "\t";
-  // }
-  // std::cout << "\n\n";
 }
 
 void Estimator::optimization() {

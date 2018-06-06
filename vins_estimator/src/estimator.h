@@ -22,13 +22,15 @@
 #include <queue>
 #include <unordered_map>
 
-#include "pointclassifier/pointclassifier.h"
+#include "dynenv/pointclassifier.h"
+#include "dynenv/weightsIO.h"
 
 class Estimator {
 public:
   Estimator();
 
   void setParameter();
+  void setIO(IO *io) { io = io; }
 
   // interface
   void processIMU(double t, const Vector3d &linear_acceleration,
@@ -132,4 +134,6 @@ public:
   Vector3d relo_relative_t;
   Quaterniond relo_relative_q;
   double relo_relative_yaw;
+
+  IO *io;
 };
