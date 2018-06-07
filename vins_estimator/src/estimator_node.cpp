@@ -337,10 +337,14 @@ int main(int argc, char **argv) {
   readParameters(n);
   estimator.setParameter();
   std::string weights_filepath("~/weights.csv");
+  std::string classifier("no classifier");
   n.getParam("weights_filepath", weights_filepath);
+  n.getParam("classifier", classifier);
   std::cout << "weights filepath: " << weights_filepath << "\n";
+  std::cout << "classifier: " << classifier << "\n";
   IO io(weights_filepath);
   estimator.setIO(&io);
+  estimator.setClassifier(classifier);
 
 #ifdef EIGEN_DONT_PARALLELIZE
   ROS_DEBUG("EIGEN_DONT_PARALLELIZE");
@@ -360,7 +364,6 @@ int main(int argc, char **argv) {
 
   std::thread measurement_process{process};
   ros::spin();
-
   io.write();
   return 0;
 }

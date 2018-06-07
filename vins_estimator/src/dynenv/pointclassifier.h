@@ -21,17 +21,17 @@ inline void ExponentialWeighting(const double reproject_error_tolerance,
   *new_weight = 1.0 - (local_weight - 1.0) / (expweightdist - 1.0);
 }
 
-class classifyPoint {
+class ClassifyPoint {
 protected:
-  static constexpr double reproject_error_tolerance = 0.01;
-  static constexpr double reproject_error_max = 5.0;
-  static constexpr double expweightdist = 0.5;
+  static constexpr double reproject_error_tolerance = 0.1;
+  static constexpr double reproject_error_max = 30000.0;
+  static constexpr double expweightdist = 0.001;
 
 public:
   virtual void classify(FeatureManager &f_manager) = 0;
 };
 
-class classifyPointsDep3 : public classifyPoint {
+class classifyPointsDep3 : public ClassifyPoint {
 public:
   void classify(FeatureManager &f_manager) {
     for (auto &it_per_id : f_manager.feature) {
@@ -47,7 +47,7 @@ public:
   }
 };
 
-class classifyPointsNoDep : public classifyPoint {
+class classifyPointsNoDep : public ClassifyPoint {
 public:
   void classify(FeatureManager &f_manager) override {
     for (auto &it_per_id : f_manager.feature) {

@@ -32,24 +32,42 @@ include_directories(
 
 catkin_package()
 
-add_executable(vins_estimator
+file (GLOB MAINSOURCE
     src/estimator_node.cpp
     src/parameters.cpp
     src/estimator.cpp
     src/feature_manager.cpp
+)
+
+file (GLOB FACTORSOURCE
     src/factor/pose_local_parameterization.cpp
     src/factor/projection_factor.cpp
     src/factor/projection_td_factor.cpp
     src/factor/marginalization_factor.cpp
+)
+
+file (GLOB UTILITYSOURCE
     src/utility/utility.cpp
     src/utility/visualization.cpp
     src/utility/CameraPoseVisualization.cpp
+)
+
+file (GLOB INITIALSOURCE
     src/initial/solve_5pts.cpp
     src/initial/initial_aligment.cpp
     src/initial/initial_sfm.cpp
     src/initial/initial_ex_rotation.cpp
+)
+
+file (GLOB DYNENVSOURCE
     src/dynenv/weightsIO.cc
-    )
+)
 
+add_library(libfactor ${FACTORSOURCE})
+add_library(libutility ${UTILITYSOURCE})
+add_library(libinitial ${INITIALSOURCE})
+add_library(libdynenv ${DYNENVSOURCE})
+add_executable(vins_estimator ${MAINSOURCE})
 
+target_link_libraries(vins_estimator libfactor libutility libinitial libdynenv)
 target_link_libraries(vins_estimator ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})

@@ -31,7 +31,14 @@ public:
 
   void setParameter();
   void setIO(IO *io_) { io = io_; }
+  void setClassifier(std::string classifiername) {
 
+    if (classifiername == "nodep") {
+      classifier = new classifyPointsNoDep;
+    } else if (classifiername == "dep3") {
+      classifier = new classifyPointsDep3;
+    }
+  }
   // interface
   void processIMU(double t, const Vector3d &linear_acceleration,
                   const Vector3d &angular_velocity);
@@ -136,4 +143,5 @@ public:
   double relo_relative_yaw;
 
   IO *io;
+  ClassifyPoint *classifier;
 };
