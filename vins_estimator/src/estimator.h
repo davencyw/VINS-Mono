@@ -28,15 +28,25 @@
 class Estimator {
 public:
   Estimator();
+  ~Estimator() { delete classifier; }
 
   void setParameter();
+  // TODO(davencyw): tidy up here...
   void setIO(IO *io_) { io = io_; }
-  void setClassifier(std::string classifiername) {
+  void setClassifier(std::string classifiername,
+                     const double reproject_error_tolerance,
+                     const double reproject_error_max,
+                     const double expweightdist) {
 
     if (classifiername == "nodep") {
       classifier = new classifyPointsNoDep;
     } else if (classifiername == "dep3") {
       classifier = new classifyPointsDep3;
+    }
+
+    if (classifier) {
+      classifier->setParams(reproject_error_tolerance, reproject_error_max,
+                            expweightdist);
     }
   }
   // interface

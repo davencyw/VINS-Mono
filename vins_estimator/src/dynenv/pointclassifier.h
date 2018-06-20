@@ -23,11 +23,18 @@ inline void ExponentialWeighting(const double reproject_error_tolerance,
 
 class ClassifyPoint {
 protected:
-  static constexpr double reproject_error_tolerance = 0.1;
-  static constexpr double reproject_error_max = 30000.0;
-  static constexpr double expweightdist = 0.001;
+  double reproject_error_tolerance = 0.1;
+  double reproject_error_max = 10000.0;
+  double expweightdist = 0.001;
 
 public:
+  void setParams(const double reproject_error_tolerance_,
+                 const double reproject_error_max_,
+                 const double expweightdist_) {
+    reproject_error_tolerance = reproject_error_tolerance_;
+    reproject_error_max = reproject_error_max_;
+    expweightdist = expweightdist_;
+  }
   virtual void classify(FeatureManager &f_manager) = 0;
 };
 

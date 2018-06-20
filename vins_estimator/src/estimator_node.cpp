@@ -338,13 +338,25 @@ int main(int argc, char **argv) {
   estimator.setParameter();
   std::string weights_filepath("~/weights.csv");
   std::string classifier("no classifier");
+  double reproject_error_max(30000.0);
+  double reproject_error_tolerance(0.1);
+  double expweightdist(0.001);
   n.getParam("weights_filepath", weights_filepath);
   n.getParam("classifier", classifier);
+  n.getParam("reproject_error_tolerance", reproject_error_tolerance);
+  n.getParam("reproject_error_max", reproject_error_max);
+  n.getParam("expweightdist", expweightdist);
+  std::cout << "\n\n----------------------------\n";
   std::cout << "weights filepath: " << weights_filepath << "\n";
   std::cout << "classifier: " << classifier << "\n";
+  std::cout << "tolerance: " << reproject_error_tolerance << "\n";
+  std::cout << "max: " << reproject_error_max << "\n";
+  std::cout << "expweightdist: " << expweightdist << "\n";
+  std::cout << "\n----------------------------\n\n";
   IO io(weights_filepath);
   estimator.setIO(&io);
-  estimator.setClassifier(classifier);
+  estimator.setClassifier(classifier, reproject_error_tolerance,
+                          reproject_error_max, expweightdist);
 
 #ifdef EIGEN_DONT_PARALLELIZE
   ROS_DEBUG("EIGEN_DONT_PARALLELIZE");
