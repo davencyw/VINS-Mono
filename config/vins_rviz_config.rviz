@@ -96,6 +96,18 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Image
+      Enabled: true
+      Image Topic: /vins_estimator/image_feature_classification
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: feature_classification_image
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: false
+    - Class: rviz/Image
       Enabled: false
       Image Topic: /cam0/image_raw
       Max Value: 1
@@ -279,18 +291,6 @@ Visualization Manager:
           Namespaces:
             {}
           Queue Size: 100
-          Value: true
-        - Class: rviz/Image
-          Enabled: true
-          Image Topic: /pose_graph/match_image
-          Max Value: 1
-          Median window: 5
-          Min Value: 0
-          Name: loop_match_image
-          Normalize Range: true
-          Queue Size: 2
-          Transport Hint: raw
-          Unreliable: false
           Value: true
         - Class: rviz/Marker
           Enabled: true

@@ -20,6 +20,7 @@ std::condition_variable con;
 double current_time = -1;
 queue<sensor_msgs::ImuConstPtr> imu_buf;
 queue<sensor_msgs::PointCloudConstPtr> feature_buf;
+queue<sensor_msgs::ImageConstPtr> image_buf;
 queue<sensor_msgs::PointCloudConstPtr> relo_buf;
 int sum_of_wait = 0;
 
@@ -158,6 +159,8 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
       pubLatestOdometry(tmp_P, tmp_Q, tmp_V, header);
   }
 }
+
+void img_callback(const sensor_msgs::ImageConstPtr &img_msg) {}
 
 void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg) {
   if (!init_feature) {
@@ -314,6 +317,7 @@ void process() {
       pubPointCloud(estimator, header);
       pubTF(estimator, header);
       pubKeyframe(estimator);
+      pubImageFeatureClassification(estimator, header);
       if (relo_msg != NULL)
         pubRelocalization(estimator);
       // ROS_ERROR("end: %f, at %f", img_msg->header.stamp.toSec(),
@@ -365,6 +369,8 @@ int main(int argc, char **argv) {
 
   registerPub(n);
 
+  // ros::Subscriber sub_img = n.subscribe(IMAGE_TOPIC, 100, img_callback);
+
   ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback,
                                         ros::TransportHints().tcpNoDelay());
   ros::Subscriber sub_image =
@@ -376,6 +382,6 @@ int main(int argc, char **argv) {
 
   std::thread measurement_process{process};
   ros::spin();
-  io.write();
+  io.writeaverage();
   return 0;
 }

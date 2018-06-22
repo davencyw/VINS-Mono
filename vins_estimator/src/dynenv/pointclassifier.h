@@ -38,6 +38,8 @@ public:
   virtual void classify(FeatureManager &f_manager) = 0;
 };
 
+// TODO(davencyw): move to cpp
+
 class classifyPointsDep3 : public ClassifyPoint {
 public:
   void classify(FeatureManager &f_manager) {

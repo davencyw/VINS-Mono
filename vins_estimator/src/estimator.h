@@ -22,6 +22,7 @@
 #include <queue>
 #include <unordered_map>
 
+#include "dynenv/cluster.h"
 #include "dynenv/pointclassifier.h"
 #include "dynenv/weightsIO.h"
 
@@ -154,4 +155,5 @@ public:
 
   IO *io;
   ClassifyPoint *classifier;
+  ClusterAlgorithm *clusteralgo;
 };
