@@ -437,7 +437,7 @@ void Estimator::solveOdometry() {
         io->averageWeights2File(f_manager);
       }
       if (clusteralgo) {
-        clusteralgo->cluster(f_manager);
+        cluster_centers = clusteralgo->cluster(f_manager, frame_count);
       }
     }
   }

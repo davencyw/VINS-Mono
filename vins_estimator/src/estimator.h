@@ -50,6 +50,9 @@ public:
                             expweightdist);
     }
   }
+
+  void setClusterAlgo(ClusterAlgorithm *algo) { clusteralgo = algo; }
+
   // interface
   void processIMU(double t, const Vector3d &linear_acceleration,
                   const Vector3d &angular_velocity);
@@ -156,4 +159,5 @@ public:
   IO *io;
   ClassifyPoint *classifier;
   ClusterAlgorithm *clusteralgo;
+  std::vector<Vector2d> cluster_centers;
 };

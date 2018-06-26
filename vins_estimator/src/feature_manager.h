@@ -64,7 +64,7 @@ public:
   FeaturePerId(int _feature_id, int _start_frame)
       : feature_id(_feature_id), start_frame(_start_frame), used_num(0),
         estimated_depth(-1.0), solve_flag(0), weight(0.5), residual(-1.0),
-        clusterid(-1) {}
+        clusterid(0) {}
 
   int endFrame();
 };

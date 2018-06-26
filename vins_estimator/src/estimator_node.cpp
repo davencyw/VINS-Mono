@@ -1,5 +1,6 @@
 #include <condition_variable>
 #include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.h>
 #include <map>
 #include <mutex>
 #include <opencv2/opencv.hpp>
@@ -12,15 +13,16 @@
 #include "parameters.h"
 #include "utility/visualization.h"
 
+#include "dynenv/cluster.h"
 #include "dynenv/weightsIO.h"
 
 Estimator estimator;
 
 std::condition_variable con;
 double current_time = -1;
+
 queue<sensor_msgs::ImuConstPtr> imu_buf;
 queue<sensor_msgs::PointCloudConstPtr> feature_buf;
-queue<sensor_msgs::ImageConstPtr> image_buf;
 queue<sensor_msgs::PointCloudConstPtr> relo_buf;
 int sum_of_wait = 0;
 
@@ -28,6 +30,9 @@ std::mutex m_buf;
 std::mutex m_state;
 std::mutex i_buf;
 std::mutex m_estimator;
+
+// queue<sensor_msgs::ImageConstPtr> image_buf;
+// std::mutex m_img;
 
 double latest_time;
 Eigen::Vector3d tmp_P;
@@ -135,7 +140,12 @@ getMeasurements() {
   }
   return measurements;
 }
-
+// void img_callback(const sensor_msgs::ImageConstPtr &img_msg) {
+//
+//   m_img.lock();
+//   image_buf.push(img_msg);
+//   m_img.unlock();
+// }
 void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
   if (imu_msg->header.stamp.toSec() <= last_imu_t) {
     ROS_WARN("imu message in disorder!");
@@ -160,11 +170,10 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
   }
 }
 
-void img_callback(const sensor_msgs::ImageConstPtr &img_msg) {}
-
 void feature_callback(const sensor_msgs::PointCloudConstPtr &feature_msg) {
   if (!init_feature) {
-    // skip the first detected feature, which doesn't contain optical flow speed
+    // skip the first detected feature, which doesn't contain optical flow
+    // speed
     init_feature = 1;
     return;
   }
@@ -317,7 +326,10 @@ void process() {
       pubPointCloud(estimator, header);
       pubTF(estimator, header);
       pubKeyframe(estimator);
-      pubImageFeatureClassification(estimator, header);
+
+      cv::Mat orig_image =
+          cv::Mat(480, 752, CV_8UC3, cv::Scalar(255, 255, 255));
+      pubImageFeatureClassification(estimator, header, orig_image);
       if (relo_msg != NULL)
         pubRelocalization(estimator);
       // ROS_ERROR("end: %f, at %f", img_msg->header.stamp.toSec(),
@@ -361,6 +373,7 @@ int main(int argc, char **argv) {
   estimator.setIO(&io);
   estimator.setClassifier(classifier, reproject_error_tolerance,
                           reproject_error_max, expweightdist);
+  estimator.setClusterAlgo(new SimpleCluster());
 
 #ifdef EIGEN_DONT_PARALLELIZE
   ROS_DEBUG("EIGEN_DONT_PARALLELIZE");
@@ -369,7 +382,7 @@ int main(int argc, char **argv) {
 
   registerPub(n);
 
-  // ros::Subscriber sub_img = n.subscribe(IMAGE_TOPIC, 100, img_callback);
+  // ros::Subscriber image = n.subscribe("/cam0/image_raw", 100, img_callback);
 
   ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback,
                                         ros::TransportHints().tcpNoDelay());

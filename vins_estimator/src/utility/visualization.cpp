@@ -416,18 +416,44 @@ void pubRelocalization(const Estimator &estimator) {
 }
 
 void pubImageFeatureClassification(const Estimator &estimator,
-                                   const std_msgs::Header &header) {
+                                   const std_msgs::Header &header,
+                                   cv::Mat image) {
 
   const FeatureManager *f_manager = &(estimator.f_manager);
 
-  cv::Mat image = cv::Mat(480, 752, CV_8UC3, cv::Scalar(255, 255, 255));
+  const int frame_count(estimator.frame_count);
 
   for (const auto &it_per_id : f_manager->feature) {
+
+    if (it_per_id.start_frame + it_per_id.feature_per_frame.size() <
+        frame_count) {
+      continue;
+    }
+
+    constexpr double boxdist(10.0);
     const double weight = it_per_id.weight;
     Vector2d uv = it_per_id.feature_per_frame.back().uv;
     const cv::Point point(uv.x(), uv.y());
     cv::circle(image, point, 2, cv::Scalar(255 * weight, 0, 255 * weight), 2);
+    // cv::putText(image, std::to_string(weight), point,
+    //             cv::FONT_HERSHEY_COMPLEX_SMALL, 1,
+    //             cv::Scalar(255 * weight, 0, 255 * weight), 1);
+
+    if (it_per_id.clusterid == 1) {
+      cv::circle(image, point, 10, cv::Scalar(255, 0, 0), 2);
+    } else if (it_per_id.clusterid == 2) {
+      cv::circle(image, point, 10, cv::Scalar(0, 0, 0), 2);
+    } else if (it_per_id.clusterid < 0) {
+      cv::circle(image, point, 10, cv::Scalar(0, 0, 255), 2);
+    }
   }
+
+  // cluster center
+  for (auto &center : estimator.cluster_centers) {
+    cv::Point pcenter(center.x(), center.y());
+    cv::circle(image, pcenter, 9, cv::Scalar(0, 255, 0), -1);
+  }
+
   sensor_msgs::ImagePtr msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
 

@@ -14,7 +14,7 @@
        <param name="vins_folder" type="string" value="$(arg vins_path)" />
        <param name="weights_filepath" type="string" value="/home/davencyw/" />
        <param name="classifier" type="string" value="nodep" />
-       <param name="reproject_error_max" type="double" value="2000" />
+       <param name="reproject_error_max" type="double" value="3000" />
     </node>
 
     <node name="pose_graph" pkg="pose_graph" type="pose_graph" output="screen">
