@@ -16,15 +16,16 @@ public:
   virtual std::vector<Vector2d> cluster(FeatureManager &f_manager,
                                         const int framecount) = 0;
 
-  void getClusterHull() {
-    // TODO(davencyw): implement
-  }
-
 protected:
 };
 
 // implementation for only one single cluster!
 class SimpleCluster : public ClusterAlgorithm {
+
+private:
+  // prior for cluster in
+  std::vector<cv::Point> _convexclusterhull;
+
 public:
   std::vector<Vector2d> cluster(FeatureManager &f_manager,
                                 const int framecount) override {
@@ -33,10 +34,11 @@ public:
     std::vector<Vector2d> cluster_centers;
     int num_in_cluster(0);
     Vector2d center(0, 0);
-    std::vector<size_t> lowweightsindices;
     std::vector<std::pair<FeaturePerId *, double>> features_in_cluster;
 
     for (auto &it_per_id : f_manager.feature) {
+
+      it_per_id.clusterid = 0;
 
       if (it_per_id.start_frame + it_per_id.feature_per_frame.size() <
           framecount) {
@@ -70,7 +72,6 @@ public:
       features_in_cluster.erase(
           std::remove_if(features_in_cluster.begin(), features_in_cluster.end(),
                          [=](std::pair<FeaturePerId *, double> i) {
-
                            // remove from cluster if distance is bigger than 2
                            // times the averagedistance
                            bool outlier(i.second > 2.0 * averagedist);
@@ -95,32 +96,36 @@ public:
       center /= static_cast<double>(features_in_cluster.size());
 
       // add inliers
-      std::vector<cv::Point> outputarray;
-      cv::convexHull(inputarray, outputarray);
+      cv::convexHull(inputarray, _convexclusterhull);
 
       for (auto &it_per_id : f_manager.feature) {
         if (it_per_id.clusterid == 0) {
 
           const auto puv(it_per_id.feature_per_frame.back().uv);
           const cv::Point p(puv.x(), puv.y());
-          const double result = cv::pointPolygonTest(outputarray, p, false);
+          const double result =
+              cv::pointPolygonTest(_convexclusterhull, p, false);
 
           if (result > -1) {
             // inside polygon
             it_per_id.clusterid = 2;
             features_in_cluster.push_back(std::make_pair(&it_per_id, 0));
+            it_per_id.weight = averageweight;
           }
         }
       }
-
-      // assign weights(=*) to all points in cluster
-      for_each(features_in_cluster.begin(), features_in_cluster.end(),
-               [averageweight](std::pair<FeaturePerId *, double> i) {
-                 i.first->weight = averageweight;
-               });
+      //
+      // // assign weights(=*) to all points in cluster
+      // for_each(features_in_cluster.begin(), features_in_cluster.end(),
+      //          [averageweight](std::pair<FeaturePerId *, double> i) {
+      //            if (i.first->clusterid == 2)
+      //              i.first->weight = 0.0;
+      //          });
 
       cluster_centers.push_back(center);
     }
+
+    // move _convexclusterhull with optical flow
 
     return cluster_centers;
   }

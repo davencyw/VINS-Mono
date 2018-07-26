@@ -415,9 +415,7 @@ void pubRelocalization(const Estimator &estimator) {
   pub_relo_relative_pose.publish(odometry);
 }
 
-void pubImageFeatureClassification(const Estimator &estimator,
-                                   const std_msgs::Header &header,
-                                   cv::Mat image) {
+void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
 
   const FeatureManager *f_manager = &(estimator.f_manager);
 
@@ -435,15 +433,18 @@ void pubImageFeatureClassification(const Estimator &estimator,
     Vector2d uv = it_per_id.feature_per_frame.back().uv;
     const cv::Point point(uv.x(), uv.y());
     cv::circle(image, point, 2, cv::Scalar(255 * weight, 0, 255 * weight), 2);
-    // cv::putText(image, std::to_string(weight), point,
-    //             cv::FONT_HERSHEY_COMPLEX_SMALL, 1,
-    //             cv::Scalar(255 * weight, 0, 255 * weight), 1);
 
     if (it_per_id.clusterid == 1) {
+      // original in cluster
       cv::circle(image, point, 10, cv::Scalar(255, 0, 0), 2);
+      // cv::putText(image, std::to_string(weight), point,
+      //             cv::FONT_HERSHEY_COMPLEX_SMALL, 1,
+      //             cv::Scalar(255 * weight, 0, 255 * weight), 1);
     } else if (it_per_id.clusterid == 2) {
+      // inside convex hull of original cluster
       cv::circle(image, point, 10, cv::Scalar(0, 0, 0), 2);
     } else if (it_per_id.clusterid < 0) {
+      // outlier of cluster, removed
       cv::circle(image, point, 10, cv::Scalar(0, 0, 255), 2);
     }
   }

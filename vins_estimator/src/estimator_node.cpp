@@ -140,12 +140,7 @@ getMeasurements() {
   }
   return measurements;
 }
-// void img_callback(const sensor_msgs::ImageConstPtr &img_msg) {
-//
-//   m_img.lock();
-//   image_buf.push(img_msg);
-//   m_img.unlock();
-// }
+
 void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg) {
   if (imu_msg->header.stamp.toSec() <= last_imu_t) {
     ROS_WARN("imu message in disorder!");
@@ -329,7 +324,7 @@ void process() {
 
       cv::Mat orig_image =
           cv::Mat(480, 752, CV_8UC3, cv::Scalar(255, 255, 255));
-      pubImageFeatureClassification(estimator, header, orig_image);
+      pubImageFeatureClassification(estimator, orig_image);
       if (relo_msg != NULL)
         pubRelocalization(estimator);
       // ROS_ERROR("end: %f, at %f", img_msg->header.stamp.toSec(),
@@ -356,7 +351,7 @@ int main(int argc, char **argv) {
   std::string classifier("no classifier");
   double reproject_error_max(30000.0);
   double reproject_error_tolerance(0.1);
-  double expweightdist(0.001);
+  double expweightdist(0.1);
   n.getParam("weights_filepath", weights_filepath);
   n.getParam("classifier", classifier);
   n.getParam("reproject_error_tolerance", reproject_error_tolerance);
@@ -381,8 +376,6 @@ int main(int argc, char **argv) {
   ROS_WARN("waiting for image and imu...");
 
   registerPub(n);
-
-  // ros::Subscriber image = n.subscribe("/cam0/image_raw", 100, img_callback);
 
   ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback,
                                         ros::TransportHints().tcpNoDelay());

@@ -35,9 +35,7 @@ extern int IMAGE_ROW, IMAGE_COL;
 
 void registerPub(ros::NodeHandle &n);
 
-void pubImageFeatureClassification(const Estimator &estimator,
-                                   const std_msgs::Header &header,
-                                   cv::Mat image);
+void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image);
 
 void pubLatestOdometry(const Eigen::Vector3d &P, const Eigen::Quaterniond &Q,
                        const Eigen::Vector3d &V,
