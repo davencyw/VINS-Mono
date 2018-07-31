@@ -437,9 +437,11 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
     if (it_per_id.clusterid == 1) {
       // original in cluster
       cv::circle(image, point, 10, cv::Scalar(255, 0, 0), 2);
-      // cv::putText(image, std::to_string(weight), point,
-      //             cv::FONT_HERSHEY_COMPLEX_SMALL, 1,
-      //             cv::Scalar(255 * weight, 0, 255 * weight), 1);
+      // const double z = it_per_id.estimated_depth;
+      // cv::putText(image, std::to_string(z), point,
+      //             cv::FONT_HERSHEY_COMPLEX_SMALL, 1.5, cv::Scalar(0, 0, 0),
+      //             1.5);
+      // cv::Scalar(255 * weight, 0, 255 * weight), 1);
     } else if (it_per_id.clusterid == 2) {
       // inside convex hull of original cluster
       cv::circle(image, point, 10, cv::Scalar(0, 0, 0), 2);
@@ -450,8 +452,8 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
   }
 
   // cluster center
-  for (auto &center : estimator.cluster_centers) {
-    cv::Point pcenter(center.x(), center.y());
+  for (auto &cluster : estimator.cluster) {
+    cv::Point pcenter(cluster.center.x(), cluster.center.y());
     cv::circle(image, pcenter, 9, cv::Scalar(0, 255, 0), -1);
   }
 

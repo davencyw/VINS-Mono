@@ -431,7 +431,7 @@ void Estimator::solveOdometry() {
     f_manager.triangulate(Ps, tic, ric);
     ROS_DEBUG("triangulation costs %f", t_tri.toc());
     if (clusteralgo) {
-      cluster_centers = clusteralgo->cluster(f_manager, frame_count);
+      cluster = clusteralgo->cluster(f_manager, frame_count);
     }
     optimization();
     if (classifier) {

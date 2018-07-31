@@ -55,7 +55,7 @@ bool ProjectionFactor::Evaluate(double const *const *parameters,
   residual = sqrt_info * residual;
 
   // davencyw classification weights
-  *comp_residual = residual.squaredNorm();
+  *comp_residual = residual.norm();
   residual *= weight;
 
   if (jacobians) {
@@ -93,6 +93,7 @@ bool ProjectionFactor::Evaluate(double const *const *parameters,
 
       jacobian_pose_i.leftCols<6>() = reduce * jaco_i;
       jacobian_pose_i.rightCols<1>().setZero();
+      jacobian_pose_i *= weight;
     }
 
     if (jacobians[1]) {
@@ -106,6 +107,7 @@ bool ProjectionFactor::Evaluate(double const *const *parameters,
 
       jacobian_pose_j.leftCols<6>() = reduce * jaco_j;
       jacobian_pose_j.rightCols<1>().setZero();
+      jacobian_pose_j *= weight;
     }
     if (jacobians[2]) {
       Eigen::Map<Eigen::Matrix<double, 2, 7, Eigen::RowMajor>> jacobian_ex_pose(
@@ -121,12 +123,14 @@ bool ProjectionFactor::Evaluate(double const *const *parameters,
                                  (Rj.transpose() * (Ri * tic + Pi - Pj) - tic));
       jacobian_ex_pose.leftCols<6>() = reduce * jaco_ex;
       jacobian_ex_pose.rightCols<1>().setZero();
+      jacobian_ex_pose *= weight;
     }
     if (jacobians[3]) {
       Eigen::Map<Eigen::Vector2d> jacobian_feature(jacobians[3]);
 #if 1
       jacobian_feature = reduce * ric.transpose() * Rj.transpose() * Ri * ric *
                          pts_i * -1.0 / (inv_dep_i * inv_dep_i);
+      jacobian_feature *= weight;
 #else
       jacobian_feature =
           reduce * ric.transpose() * Rj.transpose() * Ri * ric * pts_i;

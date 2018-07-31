@@ -43,6 +43,8 @@ public:
       classifier = new classifyPointsNoDep;
     } else if (classifiername == "dep3") {
       classifier = new classifyPointsDep3;
+    } else if (classifiername == "depthdep3") {
+      classifier = new classifyPointsDepthDep3;
     }
 
     if (classifier) {
@@ -159,5 +161,5 @@ public:
   IO *io;
   ClassifyPoint *classifier;
   ClusterAlgorithm *clusteralgo;
-  std::vector<Vector2d> cluster_centers;
+  std::vector<Cluster> cluster;
 };

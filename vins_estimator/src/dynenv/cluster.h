@@ -11,10 +11,16 @@
 
 // TODO(davencyw): move to cpp
 
+struct Cluster {
+  Vector2d center;
+  std::vector<cv::Point> convexhull;
+  Vector2d averageopticalflow;
+};
+
 class ClusterAlgorithm {
 public:
-  virtual std::vector<Vector2d> cluster(FeatureManager &f_manager,
-                                        const int framecount) = 0;
+  virtual std::vector<Cluster> cluster(FeatureManager &f_manager,
+                                       const int framecount) = 0;
 
 protected:
 };
@@ -27,11 +33,12 @@ private:
   std::vector<cv::Point> _convexclusterhull;
 
 public:
-  std::vector<Vector2d> cluster(FeatureManager &f_manager,
-                                const int framecount) override {
+  std::vector<Cluster> cluster(FeatureManager &f_manager,
+                               const int framecount) override {
 
     // cluster center for cluster-points with low weights
-    std::vector<Vector2d> cluster_centers;
+    std::vector<Cluster> cluster;
+    cluster.emplace_back(Cluster());
     int num_in_cluster(0);
     Vector2d center(0, 0);
     std::vector<std::pair<FeaturePerId *, double>> features_in_cluster;
@@ -122,12 +129,10 @@ public:
       //              i.first->weight = 0.0;
       //          });
 
-      cluster_centers.push_back(center);
+      cluster.back().center = center;
     }
 
-    // move _convexclusterhull with optical flow
-
-    return cluster_centers;
+    return cluster;
   }
 };
 
