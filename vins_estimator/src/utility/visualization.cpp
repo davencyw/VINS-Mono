@@ -451,10 +451,12 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
     }
   }
 
-  // cluster center
   for (auto &cluster : estimator.cluster) {
+    // cluster center
     cv::Point pcenter(cluster.center.x(), cluster.center.y());
     cv::circle(image, pcenter, 9, cv::Scalar(0, 255, 0), -1);
+    // cluster polygon
+    cv::polylines(image, cluster.convexhull, true, cv::Scalar(0, 0, 0));
   }
 
   sensor_msgs::ImagePtr msg =

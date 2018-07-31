@@ -38,7 +38,6 @@ public:
 
     // cluster center for cluster-points with low weights
     std::vector<Cluster> cluster;
-    cluster.emplace_back(Cluster());
     int num_in_cluster(0);
     Vector2d center(0, 0);
     std::vector<std::pair<FeaturePerId *, double>> features_in_cluster;
@@ -61,6 +60,7 @@ public:
     }
 
     if (num_in_cluster) {
+      cluster.emplace_back(Cluster());
       center /= static_cast<double>(num_in_cluster);
 
       double averagedist(0.0);
@@ -121,15 +121,9 @@ public:
           }
         }
       }
-      //
-      // // assign weights(=*) to all points in cluster
-      // for_each(features_in_cluster.begin(), features_in_cluster.end(),
-      //          [averageweight](std::pair<FeaturePerId *, double> i) {
-      //            if (i.first->clusterid == 2)
-      //              i.first->weight = 0.0;
-      //          });
 
       cluster.back().center = center;
+      cluster.back().convexhull = _convexclusterhull;
     }
 
     return cluster;
