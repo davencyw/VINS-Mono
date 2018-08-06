@@ -15,12 +15,13 @@ struct Cluster {
   Vector2d center;
   std::vector<cv::Point> convexhull;
   Vector2d averageopticalflow;
+  double averageweight;
 };
 
 class ClusterAlgorithm {
 public:
-  virtual std::vector<Cluster> cluster(FeatureManager &f_manager,
-                                       const int framecount) = 0;
+  virtual void cluster(FeatureManager &f_manager, const int framecount,
+                       std::vector<Cluster> &cluster) = 0;
 
 protected:
 };
@@ -33,11 +34,20 @@ private:
   std::vector<cv::Point> _convexclusterhull;
 
 public:
-  std::vector<Cluster> cluster(FeatureManager &f_manager,
-                               const int framecount) override {
+  void cluster(FeatureManager &f_manager, const int framecount,
+               std::vector<Cluster> &cluster) override {
+
+    // move cluster from next frame to use as prior
+    // TODO(dave): add time dependency on velocity
+    bool cluster_available = !cluster.empty();
+    if (cluster_available) {
+      for (auto &point_i : cluster.back().convexhull) {
+        point_i.x += cluster.back().averageopticalflow.x();
+        point_i.y += cluster.back().averageopticalflow.y();
+      }
+    }
 
     // cluster center for cluster-points with low weights
-    std::vector<Cluster> cluster;
     int num_in_cluster(0);
     Vector2d center(0, 0);
     std::vector<std::pair<FeaturePerId *, double>> features_in_cluster;
@@ -51,6 +61,19 @@ public:
         continue;
       }
 
+      // check if in moved cluster from old frame
+      if (cluster_available) {
+        const auto puv(it_per_id.feature_per_frame.back().uv);
+        const cv::Point p(puv.x(), puv.y());
+        const double result =
+            cv::pointPolygonTest(cluster.back().convexhull, p, false);
+
+        if (result > -1) {
+          // inside polygon of prior moved cluster
+          it_per_id.weight *= 0.59;
+        }
+      }
+
       if (it_per_id.weight < 0.3) {
         ++num_in_cluster;
         it_per_id.clusterid = 1;
@@ -60,7 +83,6 @@ public:
     }
 
     if (num_in_cluster) {
-      cluster.emplace_back(Cluster());
       center /= static_cast<double>(num_in_cluster);
 
       double averagedist(0.0);
@@ -92,12 +114,16 @@ public:
       // compute new clustercenter and averageweight*
       center = Vector2d(0, 0);
       double averageweight(0.0);
+      Vector2d averageopticalflow(0.0, 0.0);
+
       std::vector<cv::Point> inputarray;
       for (auto &it_per_id : features_in_cluster) {
         const auto puv = it_per_id.first->feature_per_frame.back().uv;
         inputarray.push_back(cv::Point(puv.x(), puv.y()));
         center += puv;
         averageweight += it_per_id.first->weight;
+        averageopticalflow +=
+            it_per_id.first->feature_per_frame.back().velocity;
       }
       averageweight /= static_cast<double>(features_in_cluster.size());
       center /= static_cast<double>(features_in_cluster.size());
@@ -121,12 +147,14 @@ public:
           }
         }
       }
-
-      cluster.back().center = center;
-      cluster.back().convexhull = _convexclusterhull;
+      Cluster temp_cluster;
+      temp_cluster.center = center;
+      temp_cluster.convexhull = _convexclusterhull;
+      temp_cluster.averageweight = averageweight;
+      temp_cluster.averageopticalflow = averageopticalflow;
+      cluster.clear();
+      cluster.push_back(temp_cluster);
     }
-
-    return cluster;
   }
 };
 

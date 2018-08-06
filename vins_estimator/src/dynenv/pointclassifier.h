@@ -5,6 +5,8 @@
 #include <vector>
 
 class ClassifyPoint {
+public:
+  bool ready() { return ready_; }
 
 protected:
   inline double ExponentialWeighting(const double residual,
@@ -24,8 +26,12 @@ protected:
   }
 
   double reproject_error_tolerance_ = 0.1;
-  double reproject_error_max_ = 100.0;
-  double expweightdist_ = 0.01;
+  double expweightdist_ = 0.1;
+  double reproject_error_max_ = 40.0;
+
+  bool ready_ = false;
+  unsigned int num_measurements_ = 100;
+  unsigned int current_num_measurements_ = 0;
 
 public:
   void setParams(const double reproject_error_tolerance,
@@ -34,6 +40,15 @@ public:
     reproject_error_max_ = reproject_error_max;
     expweightdist_ = expweightdist;
   }
+
+  void setReprojectErrorMax(const double reproject_error_max) {
+
+    if (++current_num_measurements_ > num_measurements_) {
+      reproject_error_max_ = reproject_error_max;
+      ready_ = true;
+    }
+  }
+
   virtual void classify(FeatureManager &f_manager) = 0;
 };
 
