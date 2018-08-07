@@ -37,7 +37,7 @@ public:
   void setClassifier(std::string classifiername,
                      const double reproject_error_tolerance,
                      const double reproject_error_max,
-                     const double expweightdist) {
+                     const double expweightdist, const int num_measurements) {
 
     if (classifiername == "nodep") {
       classifier = new classifyPointsNoDep;
@@ -49,7 +49,7 @@ public:
 
     if (classifier) {
       classifier->setParams(reproject_error_tolerance, reproject_error_max,
-                            expweightdist);
+                            expweightdist, num_measurements);
     }
   }
 
@@ -161,5 +161,5 @@ public:
   IO *io;
   ClassifyPoint *classifier;
   ClusterAlgorithm *clusteralgo;
-  std::vector<Cluster> cluster;
+  std::deque<Cluster> cluster;
 };

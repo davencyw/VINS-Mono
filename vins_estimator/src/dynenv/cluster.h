@@ -21,7 +21,7 @@ struct Cluster {
 class ClusterAlgorithm {
 public:
   virtual void cluster(FeatureManager &f_manager, const int framecount,
-                       std::vector<Cluster> &cluster) = 0;
+                       std::deque<Cluster> &cluster) = 0;
 
 protected:
 };
@@ -35,18 +35,22 @@ private:
 
 public:
   void cluster(FeatureManager &f_manager, const int framecount,
-               std::vector<Cluster> &cluster) override {
+               std::deque<Cluster> &cluster) override {
 
-    // move cluster from next frame to use as prior
+    // move all clusters to next frame to use as prior
     // TODO(dave): add time dependency on velocity
     bool cluster_available = !cluster.empty();
     if (cluster_available) {
-      for (auto &point_i : cluster.back().convexhull) {
-        point_i.x += cluster.back().averageopticalflow.x();
-        point_i.y += cluster.back().averageopticalflow.y();
+      // adjust all clusters with flow from last frame
+      const double averageopticalflow_x(cluster.back().x());
+      const double averageopticalflow_y(cluster.back().y());
+      for (auto &cluster_i : cluster) {
+        for (auto &point_i : cluster_i.convexhull) {
+          point_i.x += averageopticalflow_x * 2.5;
+          point_i.y += averageopticalflow_y * 2.5;
+        }
       }
     }
-
     // cluster center for cluster-points with low weights
     int num_in_cluster(0);
     Vector2d center(0, 0);
@@ -61,6 +65,7 @@ public:
         continue;
       }
 
+      // TODO(dave): check all clusters and reduce weight accordingly!
       // check if in moved cluster from old frame
       if (cluster_available) {
         const auto puv(it_per_id.feature_per_frame.back().uv);
@@ -152,8 +157,10 @@ public:
       temp_cluster.convexhull = _convexclusterhull;
       temp_cluster.averageweight = averageweight;
       temp_cluster.averageopticalflow = averageopticalflow;
-      cluster.clear();
       cluster.push_back(temp_cluster);
+      if (cluster.size() > 5) {
+        cluter.pop_front();
+      }
     }
   }
 };

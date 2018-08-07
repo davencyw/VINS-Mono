@@ -11,11 +11,13 @@
        <param name="config_file" type="string" value="$(arg config_path)" />
        <param name="vins_folder" type="string" value="$(arg vins_path)" />
        <param name="weights_filepath" type="string" value="/home/davencyw/" />
-       <!-- <param name="classifier" type="string" value="noclassifier" /> -->
-       <!-- <param name="classifier" type="string" value="depthdep3" /> -->
-       <param name="classifier" type="string" value="dep3" />
+
        <param name="reproject_error_max" type="double" value="40" />
        <param name="expweightdist" type="double" value="0.1" />
+       <param name="nummeasurements" type="int" value="100" />
+       <!-- <param name="classifier" type="string" value="noclassifier" /> -->
+       <param name="classifier" type="string" value="dep3" />
+       <!-- <param name="classifier" type="string" value="depthdep3" /> -->
 
     </node>
 

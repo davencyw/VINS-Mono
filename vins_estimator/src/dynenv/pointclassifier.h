@@ -5,8 +5,7 @@
 #include <vector>
 
 class ClassifyPoint {
-public:
-  bool ready() { return ready_; }
+  bool ready_ = false;
 
 protected:
   inline double ExponentialWeighting(const double residual,
@@ -28,23 +27,33 @@ protected:
   double reproject_error_tolerance_ = 0.1;
   double expweightdist_ = 0.1;
   double reproject_error_max_ = 40.0;
+  double intermediate_reproject_error_max = 0.0;
 
-  bool ready_ = false;
   unsigned int num_measurements_ = 100;
   unsigned int current_num_measurements_ = 0;
 
 public:
+  bool ready() { return ready_; }
+
   void setParams(const double reproject_error_tolerance,
-                 const double reproject_error_max, const double expweightdist) {
+                 const double reproject_error_max, const double expweightdist,
+                 const double num_measurements = 100) {
     reproject_error_tolerance_ = reproject_error_tolerance;
     reproject_error_max_ = reproject_error_max;
     expweightdist_ = expweightdist;
+    num_measurements_ = num_measurements;
   }
 
-  void setReprojectErrorMax(const double reproject_error_max) {
+  void updateReprojectErrorMax(const double reproject_error_max) {
+
+    intermediate_reproject_error_max += reproject_error_max;
 
     if (++current_num_measurements_ > num_measurements_) {
-      reproject_error_max_ = reproject_error_max;
+      reproject_error_max_ = (intermediate_reproject_error_max /
+                              static_cast<double>(current_num_measurements_)) *
+                             3.0;
+      std::cout << "\n found max reprojecterror: " << reproject_error_max_
+                << "\n";
       ready_ = true;
     }
   }

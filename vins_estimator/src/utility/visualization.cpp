@@ -457,6 +457,13 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
     cv::circle(image, pcenter, 9, cv::Scalar(0, 255, 0), -1);
     // cluster polygon
     cv::polylines(image, cluster.convexhull, true, cv::Scalar(0, 0, 0), 2);
+    // cluster prior polygon
+    auto prior_convexhull(cluster.convexhull);
+    for (auto &point_i : prior_convexhull) {
+      point_i.x += cluster.averageopticalflow.x() * 2.5;
+      point_i.y += cluster.averageopticalflow.y() * 2.5;
+    }
+    cv::polylines(image, prior_convexhull, true, cv::Scalar(0, 0, 255), 2);
   }
 
   sensor_msgs::ImagePtr msg =

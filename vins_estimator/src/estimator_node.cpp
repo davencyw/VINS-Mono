@@ -352,22 +352,27 @@ int main(int argc, char **argv) {
   double reproject_error_max(30000.0);
   double reproject_error_tolerance(0.1);
   double expweightdist(0.1);
+  int num_measurements(100);
+
   n.getParam("weights_filepath", weights_filepath);
   n.getParam("classifier", classifier);
   n.getParam("reproject_error_tolerance", reproject_error_tolerance);
   n.getParam("reproject_error_max", reproject_error_max);
   n.getParam("expweightdist", expweightdist);
+  n.getParam("nummeasurements", num_measurements);
+
   std::cout << "\n\n----------------------------\n";
   std::cout << "weights filepath: " << weights_filepath << "\n";
   std::cout << "classifier: " << classifier << "\n";
   std::cout << "tolerance: " << reproject_error_tolerance << "\n";
-  std::cout << "max: " << reproject_error_max << "\n";
+  std::cout << "max: ((" << reproject_error_max << "))\n";
   std::cout << "expweightdist: " << expweightdist << "\n";
+  std::cout << "num measurements: " << num_measurements << "\n";
   std::cout << "\n----------------------------\n\n";
   IO io(weights_filepath);
   estimator.setIO(&io);
   estimator.setClassifier(classifier, reproject_error_tolerance,
-                          reproject_error_max, expweightdist);
+                          reproject_error_max, expweightdist, num_measurements);
   estimator.setClusterAlgo(new SimpleCluster());
 
 #ifdef EIGEN_DONT_PARALLELIZE

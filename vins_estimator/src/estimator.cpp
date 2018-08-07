@@ -430,15 +430,15 @@ void Estimator::solveOdometry() {
     TicToc t_tri;
     f_manager.triangulate(Ps, tic, ric);
     ROS_DEBUG("triangulation costs %f", t_tri.toc());
-    if (clusteralgo) {
-      clusteralgo->cluster(f_manager, frame_count, cluster);
-    }
     optimization();
     if (classifier) {
       updateWeights();
       if (io) {
         io->averageWeights2File(f_manager);
       }
+    }
+    if (clusteralgo) {
+      clusteralgo->cluster(f_manager, frame_count, cluster);
     }
   }
 }
@@ -632,15 +632,13 @@ void Estimator::updateWeights() {
       ++numframes;
     }
     it_per_id.residual /= static_cast<double>(numframes);
-    averagereprojecterror += it_per_id.residual;
+    averagereprojecterror = std::max(it_per_id.residual, averagereprojecterror);
   }
-
-  averagereprojecterror /= static_cast<double>(f_manager.feature.size());
 
   if (classifier->ready()) {
     classifier->classify(f_manager);
   } else {
-    classifier->setReprojectErrorMax(averagereprojecterror);
+    classifier->updateReprojectErrorMax(averagereprojecterror);
   }
 }
 
