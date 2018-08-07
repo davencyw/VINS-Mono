@@ -24,6 +24,7 @@ public:
                        std::deque<Cluster> &cluster) = 0;
 
 protected:
+  static constexpr double clusterthreshold_ = 0.3;
 };
 
 // implementation for only one single cluster!
@@ -37,13 +38,15 @@ public:
   void cluster(FeatureManager &f_manager, const int framecount,
                std::deque<Cluster> &cluster) override {
 
+    // TODO(dave): handle if no cluster is found in current frame..!
+
     // move all clusters to next frame to use as prior
     // TODO(dave): add time dependency on velocity
     bool cluster_available = !cluster.empty();
     if (cluster_available) {
       // adjust all clusters with flow from last frame
-      const double averageopticalflow_x(cluster.back().x());
-      const double averageopticalflow_y(cluster.back().y());
+      const double averageopticalflow_x(cluster.back().averageopticalflow.x());
+      const double averageopticalflow_y(cluster.back().averageopticalflow.y());
       for (auto &cluster_i : cluster) {
         for (auto &point_i : cluster_i.convexhull) {
           point_i.x += averageopticalflow_x * 2.5;
@@ -70,16 +73,28 @@ public:
       if (cluster_available) {
         const auto puv(it_per_id.feature_per_frame.back().uv);
         const cv::Point p(puv.x(), puv.y());
-        const double result =
-            cv::pointPolygonTest(cluster.back().convexhull, p, false);
+        const int numclusters(cluster.size());
+        int innumclusters(0);
 
-        if (result > -1) {
+        for (auto &cluster_i : cluster) {
+          const double result =
+              cv::pointPolygonTest(cluster_i.convexhull, p, false);
+          if (result > -1) {
+            ++innumclusters;
+          }
+        }
+        if (innumclusters) {
           // inside polygon of prior moved cluster
-          it_per_id.weight *= 0.59;
+          const double percentageofclusters(static_cast<double>(innumclusters) /
+                                            static_cast<double>(numclusters));
+
+          constexpr double multiplier(clusterthreshold_ - 0.01);
+          constexpr double diff(1 - multiplier);
+          it_per_id.weight *= (1 - diff * percentageofclusters);
         }
       }
 
-      if (it_per_id.weight < 0.3) {
+      if (it_per_id.weight < clusterthreshold_) {
         ++num_in_cluster;
         it_per_id.clusterid = 1;
         center += it_per_id.feature_per_frame.back().uv;
@@ -158,8 +173,8 @@ public:
       temp_cluster.averageweight = averageweight;
       temp_cluster.averageopticalflow = averageopticalflow;
       cluster.push_back(temp_cluster);
-      if (cluster.size() > 5) {
-        cluter.pop_front();
+      if (cluster.size() > 8) {
+        cluster.pop_front();
       }
     }
   }
