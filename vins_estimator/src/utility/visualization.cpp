@@ -451,7 +451,9 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
     }
   }
 
-  for (auto &cluster : estimator.cluster) {
+  // only publish latest cluster
+  if (!estimator.cluster.empty()) {
+    const Cluster cluster(estimator.cluster.back());
     // cluster center
     cv::Point pcenter(cluster.center.x(), cluster.center.y());
     cv::circle(image, pcenter, 9, cv::Scalar(0, 255, 0), -1);
@@ -465,7 +467,6 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
     }
     cv::polylines(image, prior_convexhull, true, cv::Scalar(0, 0, 255), 2);
   }
-
   sensor_msgs::ImagePtr msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
 

@@ -158,6 +158,7 @@ public:
   Quaterniond relo_relative_q;
   double relo_relative_yaw;
 
+  // dynamic environment variables
   IO *io;
   ClassifyPoint *classifier;
   ClusterAlgorithm *clusteralgo;

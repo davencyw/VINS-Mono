@@ -2,10 +2,13 @@
 #define __POINTCLASSIFIER_H__
 
 #include "../feature_manager.h"
+
+#include <algorithm>
 #include <vector>
 
 class ClassifyPoint {
   bool ready_ = false;
+  std::vector<double> maxreprojecterrors;
 
 protected:
   inline double ExponentialWeighting(const double residual,
@@ -46,12 +49,28 @@ public:
 
   void updateReprojectErrorMax(const double reproject_error_max) {
 
+    // skip misreads in initalization
+    if (reproject_error_max > 420) {
+      return;
+    }
+
     intermediate_reproject_error_max += reproject_error_max;
+    maxreprojecterrors.push_back(reproject_error_max);
 
     if (++current_num_measurements_ > num_measurements_) {
-      reproject_error_max_ = (intermediate_reproject_error_max /
-                              static_cast<double>(current_num_measurements_)) *
-                             3.0;
+      // MEDIAN
+      std::nth_element(maxreprojecterrors.begin(),
+                       maxreprojecterrors.begin() +
+                           maxreprojecterrors.size() / 2,
+                       maxreprojecterrors.end());
+      reproject_error_max_ =
+          maxreprojecterrors[maxreprojecterrors.size() / 2] * 3.0;
+
+      // AVERAGE
+      // reproject_error_max_ = (intermediate_reproject_error_max /
+      //                         static_cast<double>(current_num_measurements_))
+      //                         *
+      //                        3.0;
       std::cout << "\n found max reprojecterror: " << reproject_error_max_
                 << "\n";
       ready_ = true;

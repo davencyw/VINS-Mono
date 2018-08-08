@@ -623,21 +623,31 @@ void Estimator::updateWeights() {
 
   double averagereprojecterror(0.0);
 
+  std::vector<double> residuals;
+
   for (auto &it_per_id : f_manager.feature) {
-    int numframes(0);
-    it_per_id.residual = 0;
+    double residual(0.0);
     for (auto &it_per_frame : it_per_id.feature_per_frame) {
       // update residuals for each frame and sum up
-      it_per_id.residual += it_per_frame.residual;
-      ++numframes;
+      residual += it_per_frame.residual;
     }
-    it_per_id.residual /= static_cast<double>(numframes);
-    averagereprojecterror = std::max(it_per_id.residual, averagereprojecterror);
+
+    residual =
+        residual / static_cast<double>(it_per_id.feature_per_frame.size());
+    it_per_id.residual = residual;
+    // residuals.push_back(residual);
+    averagereprojecterror = std::max(residual, averagereprojecterror);
   }
+
+  // std::cout << "\nresidual distribution\n";
+  // for (auto &r : residuals) {
+  //   std::cout << r << "\n";
+  // }
 
   if (classifier->ready()) {
     classifier->classify(f_manager);
   } else {
+    std::cout << "\n maxreprojecterror: " << averagereprojecterror << "\n";
     classifier->updateReprojectErrorMax(averagereprojecterror);
   }
 }
