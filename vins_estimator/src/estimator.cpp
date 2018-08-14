@@ -647,7 +647,7 @@ void Estimator::updateWeights() {
   if (classifier->ready()) {
     classifier->classify(f_manager);
   } else {
-    std::cout << "\n maxreprojecterror: " << averagereprojecterror << "\n";
+    // std::cout << "\n maxreprojecterror: " << averagereprojecterror << "\n";
     classifier->updateReprojectErrorMax(averagereprojecterror);
   }
 }

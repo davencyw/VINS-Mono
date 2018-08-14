@@ -451,15 +451,26 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
     }
   }
 
-  // only publish latest cluster
+  // visualize clusters
   if (!estimator.cluster.empty()) {
-    const Cluster cluster(estimator.cluster.back());
-    // cluster center
-    cv::Point pcenter(cluster.center.x(), cluster.center.y());
-    cv::circle(image, pcenter, 9, cv::Scalar(0, 255, 0), -1);
-    // cluster polygon
-    cv::polylines(image, cluster.convexhull, true, cv::Scalar(0, 0, 0), 2);
+    const double numclusters(estimator.cluster.size());
+    double currentcluster(0);
+    for (auto &cluster : estimator.cluster) {
+      // cluster center
+      cv::Point pcenter(cluster.center.x(), cluster.center.y());
+      cv::circle(image, pcenter, 9, cv::Scalar(0, 255, 0), -1);
+      // cluster polygon
+      const double percentage((currentcluster++ / numclusters));
+      const int colour(static_cast<int>(percentage * 200));
+      int colourfront(colour);
+      if (currentcluster == numclusters) {
+        colourfront = 255;
+      }
+      cv::polylines(image, cluster.convexhull, true,
+                    cv::Scalar(colourfront, colour, colour), 2);
+    }
     // cluster prior polygon
+    const Cluster cluster(estimator.cluster.back());
     auto prior_convexhull(cluster.convexhull);
     for (auto &point_i : prior_convexhull) {
       point_i.x += cluster.averageopticalflow.x() * 2.5;
