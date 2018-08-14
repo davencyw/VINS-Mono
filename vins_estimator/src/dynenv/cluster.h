@@ -49,8 +49,8 @@ public:
       const double averageopticalflow_y(cluster.back().averageopticalflow.y());
       for (auto &cluster_i : cluster) {
         for (auto &point_i : cluster_i.convexhull) {
-          point_i.x += averageopticalflow_x * 2.5;
-          point_i.y += averageopticalflow_y * 2.5;
+          point_i.x += averageopticalflow_x * 2.0;
+          point_i.y += averageopticalflow_y * 2.0;
         }
       }
     }
@@ -89,21 +89,21 @@ public:
                                             static_cast<double>(numclusters));
 
           constexpr double multiplier(clusterthreshold_ - 0.01);
-          constexpr double diff(1 - multiplier);
-          it_per_id.weight *= (1 - diff * percentageofclusters);
+          // constexpr double diff(1 - multiplier);
+          // it_per_id.weight *= (1 - diff * percentageofclusters);
+          it_per_id.weight *= multiplier;
         }
       }
 
       if (it_per_id.weight < clusterthreshold_) {
-        ++num_in_cluster;
         it_per_id.clusterid = 1;
         center += it_per_id.feature_per_frame.back().uv;
         features_in_cluster.push_back(std::make_pair(&it_per_id, 0));
       }
     }
 
-    if (num_in_cluster) {
-      center /= static_cast<double>(num_in_cluster);
+    if (features_in_cluster.size()) {
+      center /= static_cast<double>(features_in_cluster.size());
 
       double averagedist(0.0);
       // compute distanecs to center

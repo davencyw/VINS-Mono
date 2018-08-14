@@ -453,30 +453,32 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
 
   // visualize clusters
   if (!estimator.cluster.empty()) {
-    const double numclusters(estimator.cluster.size());
-    double currentcluster(0);
-    for (auto &cluster : estimator.cluster) {
-      // cluster center
-      cv::Point pcenter(cluster.center.x(), cluster.center.y());
-      cv::circle(image, pcenter, 9, cv::Scalar(0, 255, 0), -1);
-      // cluster polygon
-      const double percentage((currentcluster++ / numclusters));
-      const int colour(static_cast<int>(percentage * 200));
-      int colourfront(colour);
-      if (currentcluster == numclusters) {
-        colourfront = 255;
-      }
-      cv::polylines(image, cluster.convexhull, true,
-                    cv::Scalar(colourfront, colour, colour), 2);
-    }
     // cluster prior polygon
     const Cluster cluster(estimator.cluster.back());
     auto prior_convexhull(cluster.convexhull);
     for (auto &point_i : prior_convexhull) {
-      point_i.x += cluster.averageopticalflow.x() * 2.5;
-      point_i.y += cluster.averageopticalflow.y() * 2.5;
+      point_i.x += cluster.averageopticalflow.x() * 2.0;
+      point_i.y += cluster.averageopticalflow.y() * 2.0;
     }
-    cv::polylines(image, prior_convexhull, true, cv::Scalar(0, 0, 255), 2);
+    if (!prior_convexhull.empty()) {
+      cv::polylines(image, prior_convexhull, true, cv::Scalar(0, 0, 255), 2);
+    }
+    const double numclusters(estimator.cluster.size());
+    double currentcluster(0);
+    for (auto &cluster : estimator.cluster) {
+      // cluster polygon
+      const double percentage(1 - (currentcluster++ / numclusters));
+      int colour(static_cast<int>(percentage * 200));
+      int colourfront(colour);
+      if (currentcluster == numclusters) {
+        colourfront = 255;
+        colour = 0;
+      }
+      if (!cluster.convexhull.empty()) {
+        cv::polylines(image, cluster.convexhull, true,
+                      cv::Scalar(colour, colourfront, colour), 2);
+      }
+    }
   }
   sensor_msgs::ImagePtr msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
