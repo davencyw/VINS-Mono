@@ -435,9 +435,9 @@ void Estimator::solveOdometry() {
       if (io) {
         io->averageWeights2File(f_manager);
       }
-    }
-    if (clusteralgo) {
-      clusteralgo->cluster(f_manager, frame_count, cluster);
+      if (clusteralgo) {
+        clusteralgo->cluster(f_manager, frame_count, cluster);
+      }
     }
     optimization();
   }

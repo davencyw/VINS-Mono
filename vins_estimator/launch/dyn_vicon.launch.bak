@@ -15,6 +15,7 @@
        <param name="nummeasurements" type="int" value="20" />
        <param name="cluster_windowsize" type="int" value="8" />
        <param name="num_cluster_confirmation" type="int" value="8" />
+       <param name="classifier" type="string" value="noclassifier" />
        <param name="classifier" type="string" value="dep3" />
        <!-- <param name="classifier" type="string" value="dep3" /> -->
        <!-- <param name="classifier" type="string" value="noclassifier" /> -->

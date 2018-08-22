@@ -29,7 +29,10 @@
 class Estimator {
 public:
   Estimator();
-  ~Estimator() { delete classifier; }
+  ~Estimator() {
+    delete classifier;
+    delete clusteralgo;
+  }
 
   void setParameter();
   // TODO(davencyw): tidy up here...
@@ -42,8 +45,6 @@ public:
       classifier = new classifyPointsNoDep;
     } else if (classifiername == "dep3") {
       classifier = new classifyPointsDep3;
-    } else if (classifiername == "depthdep3") {
-      classifier = new classifyPointsDepthDep3;
     }
 
     if (classifier) {

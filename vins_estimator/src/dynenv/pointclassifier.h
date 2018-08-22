@@ -37,91 +37,25 @@ protected:
   unsigned int current_num_measurements_ = 0;
 
 public:
-  bool ready() { return ready_; }
+  bool ready();
 
   void setParams(const double reproject_error_tolerance,
                  const double expweightdist,
-                 const double num_measurements = 100) {
-    reproject_error_tolerance_ = reproject_error_tolerance;
-    expweightdist_ = expweightdist;
-    num_measurements_ = num_measurements;
-  }
+                 const double num_measurements = 100);
 
-  void updateReprojectErrorMax(const double reproject_error_max) {
-
-    // skip misreads in initalization
-    if (reproject_error_max > 420) {
-      return;
-    }
-
-    intermediate_reproject_error_max += reproject_error_max;
-    maxreprojecterrors.push_back(reproject_error_max);
-
-    if (++current_num_measurements_ > num_measurements_) {
-      // MEDIAN
-      std::nth_element(maxreprojecterrors.begin(),
-                       maxreprojecterrors.begin() +
-                           maxreprojecterrors.size() / 2,
-                       maxreprojecterrors.end());
-      reproject_error_max_ =
-          maxreprojecterrors[maxreprojecterrors.size() / 2] * 3.0;
-
-      std::cout << "\n found max reprojecterror: " << reproject_error_max_
-                << "\n";
-      ready_ = true;
-    }
-  }
+  void updateReprojectErrorMax(const double reproject_error_max);
 
   virtual void classify(FeatureManager &f_manager) = 0;
 };
 
-// TODO(davencyw): move to cpp
-
-class classifyPointsDepthDep3 : public ClassifyPoint {
-public:
-  void classify(FeatureManager &f_manager) {
-    // TODO(davencyw): make zmax dependent on linear and angular imu velocity
-    const double zmax(10);
-
-    for (auto &it_per_id : f_manager.feature) {
-      // scale reproject_error_max with z
-      // TODO(davencyw): change reproject_error_max maximum (400) to adapt with
-      // image size
-      double z(it_per_id.estimated_depth);
-      z == -1 ? z = zmax : z = z;
-      const double local_reproject_error_max(
-          (z - 1) * (200 - reproject_error_max_) / (zmax - 1) +
-          reproject_error_max_);
-
-      const double local_new_weight =
-          0.5 * it_per_id.weight +
-          0.5 * ExponentialWeighting(it_per_id.residual,
-                                     local_reproject_error_max);
-      it_per_id.weight = local_new_weight;
-    }
-  }
-};
-
 class classifyPointsDep3 : public ClassifyPoint {
 public:
-  void classify(FeatureManager &f_manager) {
-    for (auto &it_per_id : f_manager.feature) {
-      const double local_new_weight =
-          0.5 * it_per_id.weight +
-          0.5 * ExponentialWeighting(it_per_id.residual, reproject_error_max_);
-      it_per_id.weight = local_new_weight;
-    }
-  }
+  void classify(FeatureManager &f_manager) override;
 };
 
 class classifyPointsNoDep : public ClassifyPoint {
 public:
-  void classify(FeatureManager &f_manager) override {
-    for (auto &it_per_id : f_manager.feature) {
-      it_per_id.weight =
-          ExponentialWeighting(it_per_id.residual, reproject_error_max_);
-    }
-  }
+  void classify(FeatureManager &f_manager) override;
 };
 
 #endif /* end of include guard: __POINTCLASSIFIER_H__ */

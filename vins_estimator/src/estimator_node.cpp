@@ -364,16 +364,19 @@ int main(int argc, char **argv) {
   n.getParam("num_cluster_confirmation", num_cluster_confirmation);
 
   std::cout << "\n\n----------------------------\n";
-  std::cout << "weights filepath: " << weights_filepath << "\n";
+  // std::cout << "weights filepath: " << weights_filepath << "\n";
   std::cout << "classifier: " << classifier << "\n";
-  std::cout << "tolerance: " << reproject_error_tolerance << "\n";
-  std::cout << "expweightdist: " << expweightdist << "\n";
-  std::cout << "num measurements: " << num_measurements << "\n";
-  std::cout << "cluster windowsize: " << cluster_windowsize << "\n";
-  std::cout << "num cluster confirmation: " << num_cluster_confirmation << "\n";
-  std::cout << "\n----------------------------\n\n";
-  IO io(weights_filepath);
-  estimator.setIO(&io);
+  if (classifier.compare("noclassifier")) {
+    std::cout << "tolerance: " << reproject_error_tolerance << "\n";
+    std::cout << "expweightdist: " << expweightdist << "\n";
+    std::cout << "num measurements: " << num_measurements << "\n";
+    std::cout << "cluster windowsize: " << cluster_windowsize << "\n";
+    std::cout << "num cluster confirmation: " << num_cluster_confirmation
+              << "\n";
+  }
+  std::cout << "----------------------------\n\n";
+  // IO io(weights_filepath);
+  // estimator.setIO(&io);
   estimator.setClassifier(classifier, reproject_error_tolerance, expweightdist,
                           num_measurements);
   estimator.setClusterAlgo(
@@ -397,6 +400,6 @@ int main(int argc, char **argv) {
 
   std::thread measurement_process{process};
   ros::spin();
-  io.writeaverage();
+  // io.writeaverage();
   return 0;
 }

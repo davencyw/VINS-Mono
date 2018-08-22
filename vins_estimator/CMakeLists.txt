@@ -60,7 +60,9 @@ file (GLOB INITIALSOURCE
 )
 
 file (GLOB DYNENVSOURCE
+    src/dynenv/cluster.cc
     src/dynenv/weightsIO.cc
+    src/dynenv/pointclassifier.cc
 )
 
 add_library(libfactor ${FACTORSOURCE})
