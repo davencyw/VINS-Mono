@@ -430,7 +430,6 @@ void Estimator::solveOdometry() {
     TicToc t_tri;
     f_manager.triangulate(Ps, tic, ric);
     ROS_DEBUG("triangulation costs %f", t_tri.toc());
-    optimization();
     if (classifier) {
       updateWeights();
       if (io) {
@@ -440,6 +439,7 @@ void Estimator::solveOdometry() {
     if (clusteralgo) {
       clusteralgo->cluster(f_manager, frame_count, cluster);
     }
+    optimization();
   }
 }
 

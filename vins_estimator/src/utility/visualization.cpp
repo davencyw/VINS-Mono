@@ -432,7 +432,7 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
     const double weight = it_per_id.weight;
     Vector2d uv = it_per_id.feature_per_frame.back().uv;
     const cv::Point point(uv.x(), uv.y());
-    cv::circle(image, point, 2, cv::Scalar(255 * weight, 0, 255 * weight), 2);
+    cv::circle(image, point, 6, cv::Scalar(255 * weight, 0, 255 * weight), -1);
 
     if (it_per_id.clusterid == 1) {
       // original in cluster
@@ -451,35 +451,45 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
     }
   }
 
+  // TODO(davencyw): generate heatmap
+  // cv::Mat mat;
+  // cv::Mat mat2;
+  // cv::cvtColor(image, mat, cv::COLOR_BGR2GRAY);
+  // cv::distanceTransform(mat, mat2, cv::DIST_L2, 5);
+  // cv::normalize(mat2, mat2, 0, 1., cv::NORM_MINMAX);
+  // cv::imshow("tst", mat2);
+  // cv::waitKey(1);
+  // cv::applyColorMap(image, image, cv::COLORMAP_JET);
+  // cv::cvtColor(image, image, cv::COLOR_GRAY2BGR);
+
   // visualize clusters
   if (!estimator.cluster.empty()) {
     // cluster prior polygon
     const Cluster cluster(estimator.cluster.back());
-    auto prior_convexhull(cluster.convexhull);
-    for (auto &point_i : prior_convexhull) {
-      point_i.x += cluster.averageopticalflow.x() * 2.0;
-      point_i.y += cluster.averageopticalflow.y() * 2.0;
-    }
-    if (!prior_convexhull.empty()) {
-      cv::polylines(image, prior_convexhull, true, cv::Scalar(0, 0, 255), 2);
-    }
     const double numclusters(estimator.cluster.size());
     double currentcluster(0);
-    for (auto &cluster : estimator.cluster) {
-      // cluster polygon
-      const double percentage(1 - (currentcluster++ / numclusters));
-      int colour(static_cast<int>(percentage * 200));
-      int colourfront(colour);
-      if (currentcluster == numclusters) {
-        colourfront = 255;
-        colour = 0;
-      }
-      if (!cluster.convexhull.empty()) {
-        cv::polylines(image, cluster.convexhull, true,
-                      cv::Scalar(colour, colourfront, colour), 2);
-      }
+
+    if (!cluster.convexhull.empty()) {
+      cv::polylines(image, cluster.convexhull, true, cv::Scalar(255, 0, 0), 2);
     }
+
+    // visualize all clusters
+    // for (auto &cluster : estimator.cluster) {
+    //   // cluster polygon
+    //   const double percentage(1 - (currentcluster++ / numclusters));
+    //   int colour(static_cast<int>(percentage * 200));
+    //   int colourfront(colour);
+    //   if (currentcluster == numclusters) {
+    //     colourfront = 255;
+    //     colour = 0;
+    //   }
+    //   if (!cluster.convexhull.empty()) {
+    //     cv::polylines(image, cluster.convexhull, true,
+    //                   cv::Scalar(colour, colourfront, colour), 2);
+    //   }
+    // }
   }
+
   sensor_msgs::ImagePtr msg =
       cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
 

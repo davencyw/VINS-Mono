@@ -38,8 +38,6 @@ public:
   void cluster(FeatureManager &f_manager, const int framecount,
                std::deque<Cluster> &cluster) override {
 
-    // TODO(dave): handle if no cluster is found in current frame..!
-
     // move all clusters to next frame to use as prior
     // TODO(dave): add time dependency on velocity
     bool cluster_available = !cluster.empty();
@@ -54,6 +52,7 @@ public:
         }
       }
     }
+
     // cluster center for cluster-points with low weights
     int num_in_cluster(0);
     Vector2d center(0, 0);
@@ -68,7 +67,6 @@ public:
         continue;
       }
 
-      // TODO(dave): check all clusters and reduce weight accordingly!
       // check if in moved cluster from old frame
       if (cluster_available) {
         const auto puv(it_per_id.feature_per_frame.back().uv);
@@ -77,10 +75,12 @@ public:
         int innumclusters(0);
 
         for (auto &cluster_i : cluster) {
-          const double result =
-              cv::pointPolygonTest(cluster_i.convexhull, p, false);
-          if (result > -1) {
-            ++innumclusters;
+          if (!cluster_i.convexhull.empty()) {
+            const double result =
+                cv::pointPolygonTest(cluster_i.convexhull, p, false);
+            if (result > -1) {
+              ++innumclusters;
+            }
           }
         }
         if (innumclusters) {
@@ -102,9 +102,11 @@ public:
       }
     }
 
+    Vector2d averageopticalflow(0.0, 0.0);
+    double averageweight(0.0);
+
     if (features_in_cluster.size()) {
       center /= static_cast<double>(features_in_cluster.size());
-
       double averagedist(0.0);
       // compute distanecs to center
       for (auto &it_per_id : features_in_cluster) {
@@ -133,8 +135,6 @@ public:
 
       // compute new clustercenter and averageweight*
       center = Vector2d(0, 0);
-      double averageweight(0.0);
-      Vector2d averageopticalflow(0.0, 0.0);
 
       std::vector<cv::Point> inputarray;
       for (auto &it_per_id : features_in_cluster) {
@@ -167,15 +167,15 @@ public:
           }
         }
       }
-      Cluster temp_cluster;
-      temp_cluster.center = center;
-      temp_cluster.convexhull = _convexclusterhull;
-      temp_cluster.averageweight = averageweight;
-      temp_cluster.averageopticalflow = averageopticalflow;
-      cluster.push_back(temp_cluster);
-      if (cluster.size() > 8) {
-        cluster.pop_front();
-      }
+    }
+    Cluster temp_cluster;
+    temp_cluster.center = center;
+    temp_cluster.convexhull = _convexclusterhull;
+    temp_cluster.averageweight = averageweight;
+    temp_cluster.averageopticalflow = averageopticalflow;
+    cluster.push_back(temp_cluster);
+    if (cluster.size() > 8) {
+      cluster.pop_front();
     }
   }
 };
