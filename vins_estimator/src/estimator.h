@@ -36,7 +36,6 @@ public:
   void setIO(IO *io_) { io = io_; }
   void setClassifier(std::string classifiername,
                      const double reproject_error_tolerance,
-                     const double reproject_error_max,
                      const double expweightdist, const int num_measurements) {
 
     if (classifiername == "nodep") {
@@ -48,8 +47,8 @@ public:
     }
 
     if (classifier) {
-      classifier->setParams(reproject_error_tolerance, reproject_error_max,
-                            expweightdist, num_measurements);
+      classifier->setParams(reproject_error_tolerance, expweightdist,
+                            num_measurements);
     }
   }
 

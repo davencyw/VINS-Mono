@@ -3,6 +3,7 @@
 
 #include "../feature_manager.h"
 
+#include <algorithm>
 #include <vector>
 
 #include "opencv2/highgui/highgui.hpp"
@@ -31,10 +32,18 @@ protected:
 class SimpleCluster : public ClusterAlgorithm {
 
 private:
+  const unsigned _cluster_windowsize;
+  const unsigned _num_cluster_confirmation;
+
   // prior for cluster in
   std::vector<cv::Point> _convexclusterhull;
 
 public:
+  SimpleCluster(const unsigned cluster_windowsize,
+                const unsigned num_cluster_confirmation)
+      : _cluster_windowsize(cluster_windowsize),
+        _num_cluster_confirmation(num_cluster_confirmation){};
+
   void cluster(FeatureManager &f_manager, const int framecount,
                std::deque<Cluster> &cluster) override {
 
@@ -85,13 +94,17 @@ public:
         }
         if (innumclusters) {
           // inside polygon of prior moved cluster
-          const double percentageofclusters(static_cast<double>(innumclusters) /
-                                            static_cast<double>(numclusters));
+          double percentageofclusters(
+              static_cast<double>(innumclusters) /
+              static_cast<double>(_num_cluster_confirmation));
+          percentageofclusters > 1.0
+              ? percentageofclusters = 1.0
+              : percentageofclusters = percentageofclusters;
 
           constexpr double multiplier(clusterthreshold_ - 0.01);
-          // constexpr double diff(1 - multiplier);
-          // it_per_id.weight *= (1 - diff * percentageofclusters);
-          it_per_id.weight *= multiplier;
+          constexpr double diff(1 - multiplier);
+          it_per_id.weight *= (1 - diff * percentageofclusters);
+          // it_per_id.weight *= multiplier;
         }
       }
 
@@ -174,7 +187,7 @@ public:
     temp_cluster.averageweight = averageweight;
     temp_cluster.averageopticalflow = averageopticalflow;
     cluster.push_back(temp_cluster);
-    if (cluster.size() > 8) {
+    if (cluster.size() > _cluster_windowsize) {
       cluster.pop_front();
     }
   }

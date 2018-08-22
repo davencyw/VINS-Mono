@@ -27,6 +27,7 @@ protected:
     return 1.0 - (local_weight - 1.0) / (expweightdist_ - 1.0);
   }
 
+  // default values
   double reproject_error_tolerance_ = 0.1;
   double expweightdist_ = 0.1;
   double reproject_error_max_ = 40.0;
@@ -39,10 +40,9 @@ public:
   bool ready() { return ready_; }
 
   void setParams(const double reproject_error_tolerance,
-                 const double reproject_error_max, const double expweightdist,
+                 const double expweightdist,
                  const double num_measurements = 100) {
     reproject_error_tolerance_ = reproject_error_tolerance;
-    reproject_error_max_ = reproject_error_max;
     expweightdist_ = expweightdist;
     num_measurements_ = num_measurements;
   }
@@ -66,11 +66,6 @@ public:
       reproject_error_max_ =
           maxreprojecterrors[maxreprojecterrors.size() / 2] * 3.0;
 
-      // AVERAGE
-      // reproject_error_max_ = (intermediate_reproject_error_max /
-      //                         static_cast<double>(current_num_measurements_))
-      //                         *
-      //                        3.0;
       std::cout << "\n found max reprojecterror: " << reproject_error_max_
                 << "\n";
       ready_ = true;

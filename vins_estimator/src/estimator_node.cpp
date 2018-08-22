@@ -349,31 +349,35 @@ int main(int argc, char **argv) {
   estimator.setParameter();
   std::string weights_filepath("~/weights.csv");
   std::string classifier("no classifier");
-  double reproject_error_max(30000.0);
   double reproject_error_tolerance(0.1);
   double expweightdist(0.1);
   int num_measurements(100);
+  int cluster_windowsize(8);
+  int num_cluster_confirmation(3);
 
   n.getParam("weights_filepath", weights_filepath);
   n.getParam("classifier", classifier);
   n.getParam("reproject_error_tolerance", reproject_error_tolerance);
-  n.getParam("reproject_error_max", reproject_error_max);
   n.getParam("expweightdist", expweightdist);
   n.getParam("nummeasurements", num_measurements);
+  n.getParam("cluster_windowsize", cluster_windowsize);
+  n.getParam("num_cluster_confirmation", num_cluster_confirmation);
 
   std::cout << "\n\n----------------------------\n";
   std::cout << "weights filepath: " << weights_filepath << "\n";
   std::cout << "classifier: " << classifier << "\n";
   std::cout << "tolerance: " << reproject_error_tolerance << "\n";
-  std::cout << "max: ((" << reproject_error_max << "))\n";
   std::cout << "expweightdist: " << expweightdist << "\n";
   std::cout << "num measurements: " << num_measurements << "\n";
+  std::cout << "cluster windowsize: " << cluster_windowsize << "\n";
+  std::cout << "num cluster confirmation: " << num_cluster_confirmation << "\n";
   std::cout << "\n----------------------------\n\n";
   IO io(weights_filepath);
   estimator.setIO(&io);
-  estimator.setClassifier(classifier, reproject_error_tolerance,
-                          reproject_error_max, expweightdist, num_measurements);
-  estimator.setClusterAlgo(new SimpleCluster());
+  estimator.setClassifier(classifier, reproject_error_tolerance, expweightdist,
+                          num_measurements);
+  estimator.setClusterAlgo(
+      new SimpleCluster(cluster_windowsize, num_cluster_confirmation));
 
 #ifdef EIGEN_DONT_PARALLELIZE
   ROS_DEBUG("EIGEN_DONT_PARALLELIZE");
