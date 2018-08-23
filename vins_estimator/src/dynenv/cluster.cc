@@ -14,6 +14,7 @@ void ClusterAlgorithm::cluster(FeatureManager &f_manager, const int framecount,
   // cluster points
   std::vector<Cluster> new_cluster(computecluster(cluster_candidates));
   addInliers(f_manager, new_cluster);
+  cluster.push_back(new_cluster);
 
   if (cluster.size() > _cluster_windowsize) {
     cluster.pop_front();
@@ -87,23 +88,24 @@ void ClusterAlgorithm::moveCluster(std::deque<std::vector<Cluster>> &cluster) {
       bool noclusterfound(true);
       // check if clustercenter is inside a cluster from last frame
       for (const auto &lastframe_cluster_i : cluster.back()) {
-
-        const double result = cv::pointPolygonTest(
-            lastframe_cluster_i.convexhull, cluster_i_center, false);
-        if (result > -1) {
-          Vector2d averageopticalflow(lastframe_cluster_i.averageopticalflow);
-          // center inside cluster from last frame
-          for (auto &point_i : cluster_i.convexhull) {
-            // move with optical flow from cluster in last frame
-            point_i.x += averageopticalflow.x() * 2.0;
-            point_i.y += averageopticalflow.y() * 2.0;
+        if (!lastframe_cluster_i.convexhull.empty()) {
+          const double result = cv::pointPolygonTest(
+              lastframe_cluster_i.convexhull, cluster_i_center, false);
+          if (result > -1) {
+            Vector2d averageopticalflow(lastframe_cluster_i.averageopticalflow);
+            // center inside cluster from last frame
+            for (auto &point_i : cluster_i.convexhull) {
+              // move with optical flow from cluster in last frame
+              point_i.x += averageopticalflow.x() * 2.0;
+              point_i.y += averageopticalflow.y() * 2.0;
+            }
+            noclusterfound = false;
+            break;
           }
-          noclusterfound = false;
-          break;
         }
       }
       // invalidate cluster
-      invalid_cluster[local_currentclusterid] = noclusterfound;
+      // invalid_cluster[local_currentclusterid] = noclusterfound;
       ++local_currentclusterid;
     }
 
@@ -121,18 +123,21 @@ void ClusterAlgorithm::addInliers(FeatureManager &f_manager,
                                   const std::vector<Cluster> &new_cluster) {
   for (auto &cluster_i : new_cluster) {
     std::vector<cv::Point> convexclusterhull(cluster_i.convexhull);
-    const double averageweight(cluster_i.averageweight);
-    for (auto &it_per_id : f_manager.feature) {
-      if (it_per_id.clusterid == 0) {
+    if (!convexclusterhull.empty()) {
+      const double averageweight(cluster_i.averageweight);
+      for (auto &it_per_id : f_manager.feature) {
+        if (it_per_id.clusterid == 0) {
 
-        const auto puv(it_per_id.feature_per_frame.back().uv);
-        const cv::Point p(puv.x(), puv.y());
-        const double result = cv::pointPolygonTest(convexclusterhull, p, false);
+          const auto puv(it_per_id.feature_per_frame.back().uv);
+          const cv::Point p(puv.x(), puv.y());
+          const double result =
+              cv::pointPolygonTest(convexclusterhull, p, false);
 
-        if (result > -1) {
-          // inside polygon
-          it_per_id.clusterid = 2;
-          it_per_id.weight = averageweight;
+          if (result > -1) {
+            // inside polygon
+            it_per_id.clusterid = 2;
+            it_per_id.weight = averageweight;
+          }
         }
       }
     }
@@ -214,9 +219,8 @@ std::vector<Cluster> SimpleCluster::computecluster(
 std::vector<Cluster> DbscanCluster::computecluster(
     std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates) {
 
-  constexpr double eps(20);
-  constexpr unsigned int minpoints(3);
-
+  constexpr double eps(30);
+  constexpr unsigned int minpoints(300);
   return dbscan(cluster_candidates, eps, minpoints);
 }
 
@@ -249,31 +253,52 @@ std::vector<Cluster> DbscanCluster::dbscan(
   std::vector<int> label_vec(labels.data(),
                              labels.data() + labels.rows() * labels.cols());
   std::vector<int> unique_label_vec = label_vec;
-  std::unique(label_vec.begin(), label_vec.end());
-  const int numclusters =
-      std::distance(unique_label_vec.begin(), unique_label_vec.end());
+  std::sort(unique_label_vec.begin(), unique_label_vec.end());
+  unique_label_vec.erase(
+      std::unique(unique_label_vec.begin(), unique_label_vec.end()),
+      unique_label_vec.end());
+
+  // remove noise cluster
+  auto p(std::find(unique_label_vec.begin(), unique_label_vec.end(), -1));
+  if (p != unique_label_vec.end()) {
+    unique_label_vec.erase(p);
+  }
+
+  int numclusters(
+      std::distance(unique_label_vec.begin(), unique_label_vec.end()));
 
   std::vector<Cluster> new_clusters(numclusters);
+
+  //*DEBUG
+  std::cout << "\n\nDBSCAN FOUND " << numclusters
+            << " CLUSTERS\nwith labels:\t";
+  for (auto i : unique_label_vec)
+    std::cout << i << "\t";
+  std::cout << "\n";
+  //*/
 
   // remap labels to clusterids from 0 to numclusters
   std::map<int, int> remap_clusterids2labels;
   for (unsigned int label_i(0); label_i < unique_label_vec.size(); ++label_i) {
-    remap_clusterids2labels[unique_label_vec[label_i]] = label_i;
+    remap_clusterids2labels[label_vec[label_i]] = label_i;
   }
 
   // compute averageweight, optical flow, center and convexhull of cluster
   for (unsigned int candidate_i(0); candidate_i < cluster_candidates.size();
        ++candidate_i) {
-    const int clusterindex(remap_clusterids2labels[label_vec[candidate_i]]);
-    const FeaturePerId *feature_i(cluster_candidates[candidate_i].first);
-    const Vector2d puv(feature_i->feature_per_frame.back().uv);
-    const Vector2d velocity(feature_i->feature_per_frame.back().velocity);
-    const cv::Point cvpuv(puv.x(), puv.y());
+    const int label(label_vec[candidate_i]);
+    if (label != -1) {
+      const int clusterindex(remap_clusterids2labels[label]);
+      const FeaturePerId *feature_i(cluster_candidates[candidate_i].first);
+      const Vector2d puv(feature_i->feature_per_frame.back().uv);
+      const Vector2d velocity(feature_i->feature_per_frame.back().velocity);
+      const cv::Point cvpuv(puv.x(), puv.y());
 
-    new_clusters[clusterindex].center += puv;
-    new_clusters[clusterindex].averageweight += feature_i->weight;
-    new_clusters[clusterindex].averageopticalflow += velocity;
-    new_clusters[clusterindex].convexhull.push_back(cvpuv);
+      new_clusters[clusterindex].center += puv;
+      new_clusters[clusterindex].averageweight += feature_i->weight;
+      new_clusters[clusterindex].averageopticalflow += velocity;
+      new_clusters[clusterindex].convexhull.push_back(cvpuv);
+    }
   }
 
   for (auto &cluster_i : new_clusters) {

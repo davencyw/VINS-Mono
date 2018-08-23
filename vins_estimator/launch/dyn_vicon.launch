@@ -19,7 +19,9 @@
        <!-- <param name="classifier" type="string" value="dep3" /> -->
        <!-- <param name="classifier" type="string" value="noclassifier" /> -->
        <!-- <param name="classifier" type="string" value="depthdep3" /> -->
-       <param name="clusteralgorithm" type="string" value="simple" />
+
+       <!-- <param name="clusteralgorithm" type="string" value="simple" /> -->
+       <param name="clusteralgorithm" type="string" value="dbscan" />
 
     </node>
 
