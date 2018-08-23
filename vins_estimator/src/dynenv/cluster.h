@@ -70,9 +70,25 @@ public:
       override;
 
 private:
-  void
-  dbscan(std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
-         const double eps, const unsigned int minpts);
+  void dbscan(
+      std::vector<std::pair<FeaturePerId *, double>> const &cluster_candidates,
+      const double eps, const unsigned int minpts);
+
+  std::vector<int> regionQuery(
+      const int candidate_i, const double eps,
+      const std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates);
+
+  void expandCluster(
+      const int feature_i, std::vector<int> const &neighbours,
+      std::map<unsigned int, int> &labels,
+      const std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
+      const int clustercount, const unsigned int minpoints, const double eps);
+
+  double distfunction(const FeaturePerId *feature_a,
+                      const FeaturePerId *feature_b) const;
+
+  static constexpr int NOISE_ = -1;
+  static constexpr int UNDEFINED_ = -2;
 };
 
 #endif /* end of include guard: __CLUSTER_H__ */

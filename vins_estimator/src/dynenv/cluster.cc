@@ -1,5 +1,7 @@
 #include "cluster.h"
 
+#include <Eigen/Core>
+
 void ClusterAlgorithm::cluster(FeatureManager &f_manager, const int framecount,
                                std::deque<std::vector<Cluster>> &cluster) {
 
@@ -214,11 +216,84 @@ std::vector<Cluster> DbscanCluster::computecluster(
     std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates) {
 
   constexpr double eps(20);
-  constexpr unsigned int minpts(3);
+  constexpr unsigned int minpoints(3);
 
-  dbscan(cluster_candidates, eps, minpts);
+  dbscan(cluster_candidates, eps, minpoints);
 }
 
+// TODO(davencyw): optimize distance computation and loop ordering
 void DbscanCluster::dbscan(
-    std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
-    const double eps, const unsigned int minpts) {}
+    std::vector<std::pair<FeaturePerId *, double>> const &cluster_candidates,
+    const double eps, const unsigned int minpoints) {
+
+  std::map<unsigned int, int> labels;
+  const unsigned int numcandidates(cluster_candidates.size());
+
+  int clustercount(-1);
+
+  // initialize labels
+  for (unsigned feature_i(0); feature_i < numcandidates; ++feature_i) {
+    labels[feature_i] = UNDEFINED_;
+  }
+
+  // start algorithm
+  for (int candidate_i = 0; candidate_i < numcandidates; candidate_i++) {
+    if (labels[candidate_i] == UNDEFINED_) {
+      std::vector<int> neighbours =
+          regionQuery(candidate_i, eps, cluster_candidates);
+      if (neighbours.size() < minpoints) {
+        labels[candidate_i] = NOISE_;
+      } else {
+        clustercount++;
+        expandCluster(candidate_i, neighbours, labels, cluster_candidates,
+                      clustercount, minpoints, eps);
+      }
+    }
+  }
+}
+
+std::vector<int> DbscanCluster::regionQuery(
+    const int candidate_i, const double eps,
+    const std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates) {
+
+  std::vector<int> result;
+  for (int candidate_j = 0; candidate_j < cluster_candidates.size();
+       candidate_j++) {
+
+    const FeaturePerId *feature_a(cluster_candidates[candidate_i].first);
+    const FeaturePerId *feature_b(cluster_candidates[candidate_j].first);
+
+    if (distfunction(feature_a, feature_b) <= eps) {
+      result.push_back(candidate_j);
+    }
+  }
+  return result;
+}
+
+void DbscanCluster::expandCluster(
+    const int feature_i, std::vector<int> const &neighbours,
+    std::map<unsigned int, int> &labels,
+    const std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
+    const int clustercount, const unsigned int minpoints, const double eps) {
+  labels[feature_i] = clustercount;
+  for (int neighbour_i = 0; neighbour_i < neighbours.size(); neighbour_i++) {
+    if (labels[neighbours[neighbour_i]] == UNDEFINED_) {
+      labels[neighbours[neighbour_i]] = clustercount;
+      std::vector<int> neighbours_p =
+          regionQuery(neighbours[neighbour_i], eps, cluster_candidates);
+      if (neighbours_p.size() >= minpoints) {
+        expandCluster(neighbours[neighbour_i], neighbours_p, labels,
+                      cluster_candidates, clustercount, minpoints, eps);
+      }
+    }
+  }
+}
+
+double DbscanCluster::distfunction(const FeaturePerId *feature_a,
+                                   const FeaturePerId *feature_b) const {
+
+  // eucledian distance on image plane
+  const Vector2d dist(feature_a->feature_per_frame.back().uv -
+                      feature_b->feature_per_frame.back().uv);
+  return dist.norm();
+}
