@@ -53,7 +53,19 @@ public:
     }
   }
 
-  void setClusterAlgo(ClusterAlgorithm *algo) { clusteralgo = algo; }
+  void setClusterAlgo(const std::string clusteralgorithm,
+                      const int cluster_windowsize,
+                      const int num_cluster_confirmation) {
+
+    if (clusteralgorithm == "simple") {
+      clusteralgo =
+          new SimpleCluster(cluster_windowsize, num_cluster_confirmation);
+    }
+    if (clusteralgorithm == "dbscan") {
+      clusteralgo =
+          new DbscanCluster(cluster_windowsize, num_cluster_confirmation);
+    }
+  }
 
   // interface
   void processIMU(double t, const Vector3d &linear_acceleration,

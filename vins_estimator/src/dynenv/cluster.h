@@ -69,7 +69,7 @@ public:
       override;
 
 private:
-  void dbscan(
+  std::vector<Cluster> dbscan(
       std::vector<std::pair<FeaturePerId *, double>> const &cluster_candidates,
       const double eps, const unsigned int minpts);
 

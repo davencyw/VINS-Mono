@@ -217,11 +217,11 @@ std::vector<Cluster> DbscanCluster::computecluster(
   constexpr double eps(20);
   constexpr unsigned int minpoints(3);
 
-  dbscan(cluster_candidates, eps, minpoints);
+  return dbscan(cluster_candidates, eps, minpoints);
 }
 
 // TODO(davencyw): optimize distance computation and loop ordering
-void DbscanCluster::dbscan(
+std::vector<Cluster> DbscanCluster::dbscan(
     std::vector<std::pair<FeaturePerId *, double>> const &cluster_candidates,
     const double eps, const unsigned int minpoints) {
 
@@ -287,6 +287,8 @@ void DbscanCluster::dbscan(
       cv::convexHull(points, cluster_i.convexhull);
     }
   }
+
+  return new_clusters;
 }
 
 std::vector<int> DbscanCluster::regionQuery(
