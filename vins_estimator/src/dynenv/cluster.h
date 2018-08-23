@@ -11,11 +11,10 @@
 #include <eigen3/Eigen/Dense>
 
 struct Cluster {
-  Vector2d center;
+  Vector2d center = {0, 0};
   std::vector<cv::Point> convexhull;
-  Vector2d averageopticalflow;
-  double averageweight;
-  int clusterid;
+  Vector2d averageopticalflow = {0, 0};
+  double averageweight = 0;
 };
 
 class ClusterAlgorithm {
@@ -80,7 +79,7 @@ private:
 
   void expandCluster(
       const int feature_i, std::vector<int> const &neighbours,
-      std::map<unsigned int, int> &labels,
+      Eigen::VectorXi &labels,
       const std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
       const int clustercount, const unsigned int minpoints, const double eps);
 

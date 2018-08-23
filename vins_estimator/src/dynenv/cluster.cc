@@ -7,7 +7,6 @@ void ClusterAlgorithm::cluster(FeatureManager &f_manager, const int framecount,
 
   std::vector<std::pair<FeaturePerId *, double>> cluster_candidates;
 
-  // TODO(davencyw):
   // move clusters
   moveCluster(cluster);
   // find and reduce cluster-inlier, select points
@@ -226,15 +225,10 @@ void DbscanCluster::dbscan(
     std::vector<std::pair<FeaturePerId *, double>> const &cluster_candidates,
     const double eps, const unsigned int minpoints) {
 
-  std::map<unsigned int, int> labels;
   const unsigned int numcandidates(cluster_candidates.size());
+  Eigen::VectorXi labels = Eigen::VectorXi::Constant(numcandidates, UNDEFINED_);
 
   int clustercount(-1);
-
-  // initialize labels
-  for (unsigned feature_i(0); feature_i < numcandidates; ++feature_i) {
-    labels[feature_i] = UNDEFINED_;
-  }
 
   // start algorithm
   for (int candidate_i = 0; candidate_i < numcandidates; candidate_i++) {
@@ -248,6 +242,49 @@ void DbscanCluster::dbscan(
         expandCluster(candidate_i, neighbours, labels, cluster_candidates,
                       clustercount, minpoints, eps);
       }
+    }
+  }
+
+  // loop over candidates and extract clusters
+  std::vector<int> label_vec(labels.data(),
+                             labels.data() + labels.rows() * labels.cols());
+  std::vector<int> unique_label_vec = label_vec;
+  std::unique(label_vec.begin(), label_vec.end());
+  const int numclusters =
+      std::distance(unique_label_vec.begin(), unique_label_vec.end());
+
+  std::vector<Cluster> new_clusters(numclusters);
+
+  // remap labels to clusterids from 0 to numclusters
+  std::map<int, int> remap_clusterids2labels;
+  for (unsigned int label_i(0); label_i < unique_label_vec.size(); ++label_i) {
+    remap_clusterids2labels[unique_label_vec[label_i]] = label_i;
+  }
+
+  // compute averageweight, optical flow, center and convexhull of cluster
+  for (unsigned int candidate_i(0); candidate_i < cluster_candidates.size();
+       ++candidate_i) {
+    const int clusterindex(remap_clusterids2labels[label_vec[candidate_i]]);
+    const FeaturePerId *feature_i(cluster_candidates[candidate_i].first);
+    const Vector2d puv(feature_i->feature_per_frame.back().uv);
+    const Vector2d velocity(feature_i->feature_per_frame.back().velocity);
+    const cv::Point cvpuv(puv.x(), puv.y());
+
+    new_clusters[clusterindex].center += puv;
+    new_clusters[clusterindex].averageweight += feature_i->weight;
+    new_clusters[clusterindex].averageopticalflow += velocity;
+    new_clusters[clusterindex].convexhull.push_back(cvpuv);
+  }
+
+  for (auto &cluster_i : new_clusters) {
+    auto points = cluster_i.convexhull;
+    const double numpoints(points.size());
+    if (numpoints) {
+      cluster_i.center /= numpoints;
+      cluster_i.averageweight /= numpoints;
+      cluster_i.averageopticalflow /= numpoints;
+
+      cv::convexHull(points, cluster_i.convexhull);
     }
   }
 }
@@ -272,9 +309,10 @@ std::vector<int> DbscanCluster::regionQuery(
 
 void DbscanCluster::expandCluster(
     const int feature_i, std::vector<int> const &neighbours,
-    std::map<unsigned int, int> &labels,
+    Eigen::VectorXi &labels,
     const std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
     const int clustercount, const unsigned int minpoints, const double eps) {
+
   labels[feature_i] = clustercount;
   for (int neighbour_i = 0; neighbour_i < neighbours.size(); neighbour_i++) {
     if (labels[neighbours[neighbour_i]] == UNDEFINED_) {
