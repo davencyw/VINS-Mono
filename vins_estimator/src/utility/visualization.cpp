@@ -464,30 +464,14 @@ void pubImageFeatureClassification(const Estimator &estimator, cv::Mat image) {
 
   // visualize clusters
   if (!estimator.cluster.empty()) {
-    // cluster prior polygon
-    const Cluster cluster(estimator.cluster.back());
-    const double numclusters(estimator.cluster.size());
-    double currentcluster(0);
+    for (auto cluster : estimator.cluster.back()) {
+      // cluster prior polygon
 
-    if (!cluster.convexhull.empty()) {
-      cv::polylines(image, cluster.convexhull, true, cv::Scalar(255, 0, 0), 2);
+      if (!cluster.convexhull.empty()) {
+        cv::polylines(image, cluster.convexhull, true, cv::Scalar(255, 0, 0),
+                      2);
+      }
     }
-
-    // visualize all clusters
-    // for (auto &cluster : estimator.cluster) {
-    //   // cluster polygon
-    //   const double percentage(1 - (currentcluster++ / numclusters));
-    //   int colour(static_cast<int>(percentage * 200));
-    //   int colourfront(colour);
-    //   if (currentcluster == numclusters) {
-    //     colourfront = 255;
-    //     colour = 0;
-    //   }
-    //   if (!cluster.convexhull.empty()) {
-    //     cv::polylines(image, cluster.convexhull, true,
-    //                   cv::Scalar(colour, colourfront, colour), 2);
-    //   }
-    // }
   }
 
   sensor_msgs::ImagePtr msg =

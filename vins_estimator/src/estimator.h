@@ -162,5 +162,5 @@ public:
   IO *io;
   ClassifyPoint *classifier;
   ClusterAlgorithm *clusteralgo;
-  std::deque<Cluster> cluster;
+  std::deque<std::vector<Cluster>> cluster;
 };
