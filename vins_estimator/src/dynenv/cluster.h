@@ -62,6 +62,16 @@ public:
 };
 
 // multi object/cluster support
-class DbscanCluster : public ClusterAlgorithm {};
+class DbscanCluster : public ClusterAlgorithm {
+public:
+  DbscanCluster(const unsigned cluster_windowsize,
+                const unsigned num_cluster_confirmation)
+      : ClusterAlgorithm(cluster_windowsize, num_cluster_confirmation){};
+
+  std::vector<Cluster> computecluster(
+      FeatureManager &f_manager,
+      std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
+      const int framecount) override;
+};
 
 #endif /* end of include guard: __CLUSTER_H__ */

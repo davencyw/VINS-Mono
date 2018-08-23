@@ -212,4 +212,9 @@ std::vector<Cluster> SimpleCluster::computecluster(
   std::vector<Cluster> tmp_clustervec;
   tmp_clustervec.push_back(temp_cluster);
   return tmp_clustervec;
-};
+}
+
+std::vector<Cluster> DbscanCluster::computecluster(
+    FeatureManager &f_manager,
+    std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
+    const int framecount) {}
