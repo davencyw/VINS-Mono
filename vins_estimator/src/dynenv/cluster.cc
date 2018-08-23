@@ -9,19 +9,17 @@ void ClusterAlgorithm::cluster(FeatureManager &f_manager, const int framecount,
   // move clusters
   moveCluster(cluster);
   // find and reduce cluster-inlier, select points
-  selectPoints(f_manager, cluster_candidates, cluster, framecount);
+  selectPointsAndReduce(f_manager, cluster_candidates, cluster, framecount);
   // cluster points
-  std::vector<Cluster> new_cluster(
-      computecluster(f_manager, cluster_candidates, framecount));
+  std::vector<Cluster> new_cluster(computecluster(cluster_candidates));
   addInliers(f_manager, new_cluster);
-  // update weight
 
   if (cluster.size() > _cluster_windowsize) {
     cluster.pop_front();
   }
 }
 
-void ClusterAlgorithm::selectPoints(
+void ClusterAlgorithm::selectPointsAndReduce(
     FeatureManager &f_manager,
     std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
     std::deque<std::vector<Cluster>> &cluster, const int framecount) {
@@ -141,9 +139,7 @@ void ClusterAlgorithm::addInliers(FeatureManager &f_manager,
 }
 
 std::vector<Cluster> SimpleCluster::computecluster(
-    FeatureManager &f_manager,
-    std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
-    const int framecount) {
+    std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates) {
 
   // compute center and averageweight
   Vector2d center(0, 0);
@@ -215,6 +211,14 @@ std::vector<Cluster> SimpleCluster::computecluster(
 }
 
 std::vector<Cluster> DbscanCluster::computecluster(
-    FeatureManager &f_manager,
+    std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates) {
+
+  constexpr double eps(20);
+  constexpr unsigned int minpts(3);
+
+  dbscan(cluster_candidates, eps, minpts);
+}
+
+void DbscanCluster::dbscan(
     std::vector<std::pair<FeaturePerId *, double>> &cluster_candidates,
-    const int framecount) {}
+    const double eps, const unsigned int minpts) {}
